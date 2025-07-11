@@ -1,6 +1,23 @@
 <resources>
+
+    // Start App
     <string name="app_name">Chatting App</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
+    <string name="App_Description">Aplikasi chat untuk pengguna tuli, bisu, dan pendengar dengan teks, terjemahan video, dan transkripsi suara.</string>
+    <string name="app_Login_button">Masuk</string>
+    <string name="app_Register_button">Daftar</string>
+    <string name="app_title_welcome">Welcome to MyApp</string>
+
+    // Login App
+    <string name="forget_password_button">Lupa Kata Sandi?</string>
+    <string name="hint_password">Kata Sandi</string>
+    <string name="hint_email">Alamat Email/Nama Pengguna</string>
+    <string name="toggle_password_visibility">Toggle password visibility</string>
+
+    // Others LOL LMAOO MWEHE
+
+
+
 </resources>

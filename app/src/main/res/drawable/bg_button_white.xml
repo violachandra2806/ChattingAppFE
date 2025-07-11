@@ -1,0 +1,19 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Shadow layer - made darker and with more offset -->
+    <item android:left="0dp" android:top="6dp" android:right="0dp" android:bottom="0dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#66000000" /> <!-- Black at 40% opacity -->
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+
+    <!-- Foreground (actual button surface) -->
+    <item android:top="0dp" android:bottom="1dp"> <!-- Compensate for shadow space -->
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF" /> <!-- White background -->
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+
+</layer-list>

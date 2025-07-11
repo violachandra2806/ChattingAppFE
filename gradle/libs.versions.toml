@@ -1,5 +1,5 @@
 [versions]
-agp = "8.10.1"
+agp = "8.9.0"
 kotlin = "2.0.21"
 coreKtx = "1.16.0"
 junit = "4.13.2"
@@ -12,6 +12,9 @@ lifecycleLivedataKtx = "2.9.1"
 lifecycleViewmodelKtx = "2.9.1"
 navigationFragmentKtx = "2.6.0"
 navigationUiKtx = "2.6.0"
+composeBom = "2024.03.00"                        # ✅ Added missing composeBom version
+activityCompose = "1.9.0"                        # ✅ Added missing activity-compose version
+lifecycleRuntimeKtx = "2.6.2"                    # ✅ Added missing lifecycle-runtime-ktx version
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -40,4 +43,3 @@ androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-

@@ -1,0 +1,25 @@
+<resources>
+
+    <style name="Font_Poppins" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
+    <style name="Font_Quicksand" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">@font/quicksand_regular</item>
+    </style>
+    <style name="Font_Raleway" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">@font/raleway_regular</item>
+    </style>
+    <style name="Font_Rubik" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">@font/rubik_regular</item>
+    </style>
+    <style name="Font_Manrope" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">@font/manrope_regular</item>
+    </style>
+
+
+    <style name="PoppinsBoldTitle">
+        <item name="android:fontFamily">@font/poppins_bold</item>
+    </style>
+
+
+</resources>
