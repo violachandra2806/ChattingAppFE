@@ -9,6 +9,8 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.chattingapp.R
 
+import com.chattingapp.ui.Register.RegisterActivity
+
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var emailInput: EditText
