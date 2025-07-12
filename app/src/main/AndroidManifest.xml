@@ -12,6 +12,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ChattingApp"
         tools:targetApi="31">
+
+        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -19,13 +21,14 @@
             android:theme="@style/Theme.ChattingApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+        <!-- Splash Screen -->
         <activity
-            android:name=".SplashScreen.SplashScreen"
+            android:name=".ui.startapp.SplashScreen"
+            android:exported="true"
             android:theme="@style/SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -33,12 +36,11 @@
             </intent-filter>
         </activity>
 
+        <!-- Login Activity -->
         <activity
-            android:name=".Login.LoginActivity"
+            android:name=".ui.login.LoginActivity"
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
-
-
 
     </application>
 

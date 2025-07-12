@@ -1,4 +1,4 @@
-package com.chattingapp.ui.Login
+package com.chattingapp.ui.login
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,7 +9,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.chattingapp.R
 
-import com.chattingapp.ui.Register.RegisterActivity
+import com.chattingapp.ui.register.RegisterActivity
 
 class LoginActivity : AppCompatActivity() {
 

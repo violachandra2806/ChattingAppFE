@@ -1,4 +1,4 @@
-package com.chattingapp.ui.StartApp
+package com.chattingapp.ui.startapp
 
 import android.os.Bundle
 import android.view.animation.AnimationUtils

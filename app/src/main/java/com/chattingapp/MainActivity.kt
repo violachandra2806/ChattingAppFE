@@ -8,6 +8,8 @@ import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import com.chattingapp.databinding.ActivityMainBinding
 
+import com.chattingapp.ui.login.LoginActivity
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
