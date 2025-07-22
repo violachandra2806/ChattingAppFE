@@ -36,31 +36,32 @@
             android:layout_marginBottom="42dp" />
 
         <!-- Password -->
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_height="wrap_content">
 
             <EditText
                 android:id="@+id/editTextPassword"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:hint="@string/hint_password"
                 android:textSize="14sp"
                 android:inputType="textPassword"
-                android:backgroundTint="#40000000"/>
+                android:backgroundTint="#40000000"
+                android:paddingEnd="40dp"/>
 
             <ImageView
                 android:id="@+id/togglePasswordVisibility"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginStart="8dp"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
                 android:src="@drawable/ic_visibility_off"
                 android:contentDescription="@string/toggle_password_visibility"
-                android:visibility="gone"/>
-        </LinearLayout>
+                android:visibility="gone"
+                />
+        </RelativeLayout>
 
         <!-- Forgot Password -->
         <TextView
@@ -165,7 +166,6 @@
                 android:text="Daftar sekarang"
                 android:textColor="@color/light_blue"
                 android:textSize="12sp" />
-
         </LinearLayout>
     </LinearLayout>
 </ScrollView>
