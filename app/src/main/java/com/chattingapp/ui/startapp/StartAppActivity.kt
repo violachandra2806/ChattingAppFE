@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.chattingapp.R
 import com.chattingapp.databinding.ActivityStartAppBinding
 import com.chattingapp.ui.login.LoginActivity
+import com.chattingapp.ui.register.RegisterActivity
 
 class StartAppActivity : AppCompatActivity() {
 
