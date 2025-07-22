@@ -17,7 +17,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
+
+        buildConfigField("String", "BASE_URL", "\"http://192.168.100.12:8080/chattingapp/\"") }
 
     buildTypes {
         release {
@@ -42,6 +43,7 @@ android {
         viewBinding = true
         // Enable Compose only if you’re using it
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -85,4 +87,10 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // Volley Backend
+    implementation("com.android.volley:volley:1.2.1")
+
+    // Google
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
 }
