@@ -18,7 +18,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"http://192.168.0.110:8080/chattingapp/\"")
+        buildConfigField("String", "BASE_URL", "\"http://192.168.18.41:8080/chattingapp/\"")
     }
 
     buildTypes {
