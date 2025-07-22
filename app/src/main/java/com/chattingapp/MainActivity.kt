@@ -7,8 +7,7 @@ import android.os.Looper
 import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import com.chattingapp.databinding.ActivityMainBinding
-
-import com.chattingapp.ui.login.LoginActivity
+import com.chattingapp.ui.startapp.StartAppActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -16,20 +15,18 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // ViewBinding
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Optional: Fade-in animation for splash logo
-        val anim = AnimationUtils.loadAnimation(this, R.anim.fade_in)
-        binding.logoImage.startAnimation(anim)
+        // Scale up animation for logo
+        val scaleUp = AnimationUtils.loadAnimation(this, R.anim.scale_up)
+        binding.logoImage.startAnimation(scaleUp)
 
-        // Delay then go to LoginActivity
+        // Delay then go to StartAppActivity with fade transition
         Handler(Looper.getMainLooper()).postDelayed({
-            val intent = Intent(this, LoginActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, StartAppActivity::class.java))
+            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
             finish()
-        }, 3000) // Delay for 3 seconds
+        }, 2000) // 2 seconds delay
     }
 }

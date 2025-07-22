@@ -24,7 +24,7 @@ import org.json.JSONObject
 
 class LoginActivity : AppCompatActivity() {
 
-    private lateinit var emailUsernameInput: EditText
+    private lateinit var emailInput: EditText
     private lateinit var passwordInput: EditText
     private lateinit var loginButton: Button
     private lateinit var googleLogin: LinearLayout
@@ -39,7 +39,7 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        emailUsernameInput = findViewById(R.id.editTextEmailUsername)
+        emailInput = findViewById(R.id.editTextEmail)
         passwordInput = findViewById(R.id.editTextPassword)
         loginButton = findViewById(R.id.buttonLogin)
         googleLogin = findViewById(R.id.buttonGoogle)
@@ -61,7 +61,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
         loginButton.setOnClickListener {
-            val email = emailUsernameInput.text.toString().trim()
+            val email = emailInput.text.toString().trim()
             val password = passwordInput.text.toString().trim()
 
             if (email.isEmpty() || password.isEmpty()) {

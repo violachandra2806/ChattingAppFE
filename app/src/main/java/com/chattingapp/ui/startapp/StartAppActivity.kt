@@ -1,10 +1,13 @@
 package com.chattingapp.ui.startapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import com.chattingapp.R
 import com.chattingapp.databinding.ActivityStartAppBinding
+import com.chattingapp.ui.login.LoginActivity
+import com.chattingapp.ui.register.RegisterActivity
 
 class StartAppActivity : AppCompatActivity() {
 
@@ -15,14 +18,21 @@ class StartAppActivity : AppCompatActivity() {
         binding = ActivityStartAppBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Set entrance animations
-        binding.logo.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in))
-        binding.title.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in))
-        binding.description.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in))
-        binding.loginButton.startAnimation(AnimationUtils.loadAnimation(this, R.anim.slide_up))
+        // Staggered animations
+        binding.logo.startAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in_slow))
+        binding.title.startAnimation(AnimationUtils.loadAnimation(this, R.anim.slide_up_fast))
+        binding.description.startAnimation(AnimationUtils.loadAnimation(this, R.anim.slide_up_medium))
+        binding.loginButton.startAnimation(AnimationUtils.loadAnimation(this, R.anim.slide_up_slow))
+        binding.registerButton.startAnimation(AnimationUtils.loadAnimation(this, R.anim.slide_up_slow))
 
         binding.loginButton.setOnClickListener {
-            // Handle login button click
+            startActivity(Intent(this, LoginActivity::class.java))
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+        }
+
+        binding.registerButton.setOnClickListener {
+            startActivity(Intent(this, RegisterActivity::class.java))
+            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
         }
     }
 }
