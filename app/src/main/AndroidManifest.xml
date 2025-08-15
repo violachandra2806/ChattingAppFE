@@ -22,6 +22,7 @@
         <activity
             android:name=".ui.startapp.SplashScreen"
             android:exported="true"
+            android:label="@string/app_name"
             android:theme="@style/Theme.ChattingApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -48,5 +49,18 @@
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- Register Activity -->
+        <activity
+            android:name=".ui.register.RegisterActivity"
+            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Forgot Password Activity -->
+        <activity
+            android:name=".ui.forgotpassword.ForgotPasswordActivity"
+            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
     </application>
+
 </manifest>

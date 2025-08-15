@@ -2,6 +2,7 @@
 
     // Start App
     <string name="app_name">Chatting App</string>
+    <string name="my_app">MyApp</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
@@ -13,11 +14,19 @@
     // Login App
     <string name="forget_password_button">Lupa Kata Sandi?</string>
     <string name="hint_password">Kata Sandi</string>
-    <string name="hint_email">Alamat Email/Nama Pengguna</string>
+    <string name="hint_email_or_username">Alamat Email/Nama Pengguna</string>
     <string name="toggle_password_visibility">Toggle password visibility</string>
 
-    // Others LOL LMAOO MWEHE
+    // Register
+    <string name="hint_email">Alamat Email</string>
+    <string name="hint_username">Nama Pengguna</string>
+    <string name="hint_dob">Tanggal Lahir</string>
+    <string name="hint_confirm_pass">konfirmasi Kata Sandi</string>
+    <string name="hint_other_methods">Atau coba metode lain</string>
+    <string name="hint_login_google">Masuk dengan Google</string>
+    <string name="image_google_logo">Google Logo</string>
+    <string name="hint_already_have_account">Sudah punya akun?</string>
 
-
+    <string name="icon_back">Back Icon</string>
 
 </resources>
