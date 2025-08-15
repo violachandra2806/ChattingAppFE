@@ -60,6 +60,18 @@
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- Register Activity -->
+        <activity
+            android:name=".ui.register.RegisterActivity"
+            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Forgot Password Activity -->
+        <activity
+            android:name=".ui.forgotpassword.ForgotPasswordActivity"
+            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
     </application>
 
 </manifest>
