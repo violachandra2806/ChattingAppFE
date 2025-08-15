@@ -14,6 +14,7 @@ import com.android.volley.toolbox.Volley
 import com.chattingapp.BuildConfig
 import com.chattingapp.R
 import com.chattingapp.MainActivity
+import com.chattingapp.ui.forgotpassword.ForgotPasswordActivity
 import com.chattingapp.ui.register.RegisterActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -74,7 +75,7 @@ class LoginActivity : AppCompatActivity() {
         googleLogin.setOnClickListener { signInWithGoogle() }
         registerText.setOnClickListener { startActivity(Intent(this, RegisterActivity::class.java)) }
         forgotPasswordText.setOnClickListener {
-            Toast.makeText(this, "Fitur lupa password belum tersedia", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, ForgotPasswordActivity::class.java))
         }
 
         setupGoogleSignIn()
