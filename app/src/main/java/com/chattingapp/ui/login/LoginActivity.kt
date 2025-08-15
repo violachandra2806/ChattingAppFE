@@ -39,7 +39,7 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        emailInput = findViewById(R.id.editTextEmail)
+        emailInput = findViewById(R.id.editTextEmailUsername)
         passwordInput = findViewById(R.id.editTextPassword)
         loginButton = findViewById(R.id.buttonLogin)
         googleLogin = findViewById(R.id.buttonGoogle)
