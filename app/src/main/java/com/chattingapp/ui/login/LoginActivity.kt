@@ -14,6 +14,9 @@ import com.android.volley.toolbox.Volley
 import com.chattingapp.BuildConfig
 import com.chattingapp.R
 import com.chattingapp.MainActivity
+import com.chattingapp.ui.forgotpassword.ForgotPasswordActivity
+import com.chattingapp.ui.friendlist.FriendListActivity
+import com.chattingapp.ui.friendrequest.FriendRequestActivity
 import com.chattingapp.ui.register.RegisterActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -39,7 +42,7 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        emailInput = findViewById(R.id.editTextEmail)
+        emailInput = findViewById(R.id.editTextEmailUsername)
         passwordInput = findViewById(R.id.editTextPassword)
         loginButton = findViewById(R.id.buttonLogin)
         googleLogin = findViewById(R.id.buttonGoogle)
@@ -74,7 +77,7 @@ class LoginActivity : AppCompatActivity() {
         googleLogin.setOnClickListener { signInWithGoogle() }
         registerText.setOnClickListener { startActivity(Intent(this, RegisterActivity::class.java)) }
         forgotPasswordText.setOnClickListener {
-            Toast.makeText(this, "Fitur lupa password belum tersedia", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, ForgotPasswordActivity::class.java))
         }
 
         setupGoogleSignIn()
@@ -106,9 +109,19 @@ class LoginActivity : AppCompatActivity() {
                     when (response.getString("status")) {
                         "success" -> {
                             val userData = response.getJSONArray("data").getJSONObject(0)
+                            val userId = userData.getString("user_id")
+                            val username = userData.getString("username")
+                            val email = userData.getString("user_email")
+
+                            val sharedPref = getSharedPreferences("UserData", MODE_PRIVATE)
+                            val editor = sharedPref.edit()
+                            editor.putString("user_id", userId)
+                            editor.putString("username", username)
+                            editor.putString("email", email)
+                            editor.apply()
                             Toast.makeText(this, "Login berhasil!", Toast.LENGTH_SHORT).show()
-                            // Proceed to MainActivity after login
-                            startActivity(Intent(this, MainActivity::class.java))
+
+                            startActivity(Intent(this, FriendListActivity::class.java))
                             finish()
                         }
                         else -> Toast.makeText(
@@ -152,6 +165,7 @@ class LoginActivity : AppCompatActivity() {
             try {
                 val account = GoogleSignIn.getSignedInAccountFromIntent(data).getResult(ApiException::class.java)
                 Toast.makeText(this, "Login Google berhasil: ${account.email}", Toast.LENGTH_SHORT).show()
+
             } catch (e: ApiException) {
                 Log.e("GoogleSignIn", "Error code: ${e.statusCode}")
                 Toast.makeText(this, "Login Google gagal", Toast.LENGTH_SHORT).show()
