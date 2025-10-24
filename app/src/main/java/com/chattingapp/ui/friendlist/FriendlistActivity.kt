@@ -5,6 +5,8 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
+import android.view.View
+import android.widget.TextView
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -47,7 +49,7 @@ class FriendListActivity : AppCompatActivity() {
                             val obj = dataArray.getJSONObject(i)
                             val username = obj.getString("friend_username")
                             val initials = username.take(2).uppercase()
-                            val color = Color.parseColor("#${(100000..999999).random()}") // random warna
+                            val color = Color.parseColor("#${(100000..999999).random()}")
 
                             friends.add(Friend(username, initials, color))
                         }
@@ -71,6 +73,45 @@ class FriendListActivity : AppCompatActivity() {
         requestQueue.add(jsonObjectRequest)
     }
 
+    private fun loadFriendRequestCount(userId: String) {
+        val url = "${BuildConfig.BASE_URL}getfriendrequests?receiver=$userId&limit=1&page=1"
+
+        val requestQueue = Volley.newRequestQueue(this)
+
+        val jsonObjectRequest = JsonObjectRequest(
+            Request.Method.GET,
+            url,
+            null,
+            { response ->
+                try {
+                    if (response.getString("status") == "success") {
+                        val count = response.optInt("count", 0)
+                        val badge = findViewById<TextView>(R.id.textRequestCount)
+                        badge.text = count.toString()
+                        badge.visibility = if (count > 0) View.VISIBLE else View.GONE
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            },
+            { error ->
+                error.printStackTrace()
+            }
+        )
+
+        requestQueue.add(jsonObjectRequest)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val sharedPref = getSharedPreferences("UserData", MODE_PRIVATE)
+        val userId = sharedPref.getString("user_id", null)
+        userId?.let {
+            loadFriendRequestCount(it)
+            loadFriendList(it)
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,7 +124,6 @@ class FriendListActivity : AppCompatActivity() {
         val cardFriendRequest = findViewById<MaterialCardView>(R.id.cardFriendRequest)
         val btnAddFriend = findViewById<MaterialButton>(R.id.buttonAddFriend)
 
-        // Navigasi antar halaman
         cardFriendRequest.setOnClickListener {
             startActivity(Intent(this, FriendRequestActivity::class.java))
         }
@@ -92,20 +132,7 @@ class FriendListActivity : AppCompatActivity() {
             startActivity(Intent(this, AddFriendActivity::class.java))
         }
 
-        // Set tab aktif
-        bottomNav.selectedItemId = R.id.bottomNav
-
-//        // Dummy data
-//        friendList = listOf(
-//            Friend("@ironhewi1", "IH", Color.parseColor("#FF5722")),
-//            Friend("@bertheri", "B", Color.parseColor("#F44336")),
-//            Friend("@aditsj", "AS", Color.parseColor("#9C27B0")),
-//            Friend("@jamesbleau", "JB", Color.parseColor("#FFEB3B")),
-//            Friend("@puutrii", "P", Color.parseColor("#8BC34A")),
-//            Friend("@hendra", "H", Color.parseColor("#03A9F4")),
-//            Friend("@salma", "S", Color.parseColor("#009688")),
-//            Friend("@dian", "D", Color.parseColor("#FF9800"))
-//        )
+        bottomNav.selectedItemId = R.id.navigation_dashboard
 
         adapter = FriendAdapter(emptyList()) { friend ->
             Toast.makeText(this, "Chat dengan ${friend.username}", Toast.LENGTH_SHORT).show()
@@ -114,18 +141,16 @@ class FriendListActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
 
-// Misal user_id kamu udah disimpan di SharedPreferences waktu login
         val sharedPref = getSharedPreferences("UserData", MODE_PRIVATE)
         val userId = sharedPref.getString("user_id", null)
 
         if (userId != null) {
             loadFriendList(userId)
+            loadFriendRequestCount(userId)
         } else {
             Toast.makeText(this, "User belum login", Toast.LENGTH_SHORT).show()
         }
 
-
-        // === Fungsi pencarian ===
         fun performSearch() {
             val query = inputSearch.text.toString().trim().lowercase()
             if (query.isNotEmpty()) {
@@ -138,11 +163,10 @@ class FriendListActivity : AppCompatActivity() {
                     adapter.updateList(emptyList())
                 }
             } else {
-                adapter.updateList(friendList) // reset kalau kosong
+                adapter.updateList(friendList)
             }
         }
 
-        // Tekan Enter di keyboard
         inputSearch.setOnEditorActionListener { _, actionId, event ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                 actionId == EditorInfo.IME_ACTION_DONE ||
@@ -153,7 +177,6 @@ class FriendListActivity : AppCompatActivity() {
             } else false
         }
 
-        // Klik ikon send
         sendButton.setOnClickListener {
             performSearch()
         }

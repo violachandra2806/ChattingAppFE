@@ -23,16 +23,30 @@ class AddFriendActivity : AppCompatActivity() {
     private lateinit var adapter: AddFriendAdapter
     private lateinit var textSearchInfo: TextView
 
-    private val currentUserId = "U00004" // TODO: ambil dari session / login aktif
+    private val currentUserId: String by lazy {
+        val prefs = getSharedPreferences("UserData", MODE_PRIVATE)
+        prefs.getString("user_id", "") ?: ""
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        if (currentUserId.isEmpty()) {
+            Toast.makeText(this, "Sesi login tidak ditemukan", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_friend)
 
+        val btnBack = findViewById<ImageView>(R.id.btnBack)
         val inputSearch = findViewById<TextInputEditText>(R.id.inputSearchUsername)
         val iconSend = findViewById<ImageView>(R.id.iconSendSearchUsername)
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewResults)
         textSearchInfo = findViewById(R.id.textSearchInfo)
+
+        btnBack.setOnClickListener { finish() }
 
         adapter = AddFriendAdapter(mutableListOf()) { friend ->
             sendFriendRequest(friend.userId)
@@ -69,16 +83,34 @@ class AddFriendActivity : AppCompatActivity() {
     private fun searchFriendByUsername(keyword: String) {
         thread {
             try {
-                val url = URL("${BuildConfig.BASE_URL}searchfriendbyusername?keyword=$keyword")
+                val url = URL("${BuildConfig.BASE_URL}searchfriendbyusername?user_id=$currentUserId&keyword=$keyword&limit=10&page=1")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "GET"
                 conn.connectTimeout = 5000
                 conn.readTimeout = 5000
 
+                val responseCode = conn.responseCode
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    runOnUiThread {
+                        Toast.makeText(this, "Server error ($responseCode)", Toast.LENGTH_SHORT).show()
+                    }
+                    return@thread
+                }
+
                 val response = conn.inputStream.bufferedReader().use { it.readText() }
                 val json = JSONObject(response)
-                val data = json.getJSONArray("data")
 
+                if (json.getString("status") != "success") {
+                    runOnUiThread {
+                        val message = json.optString("message", "Tidak ada hasil ditemukan")
+                        textSearchInfo.text = message
+                        textSearchInfo.visibility = TextView.VISIBLE
+                        adapter.updateList(mutableListOf())
+                    }
+                    return@thread
+                }
+
+                val data = json.getJSONArray("data")
                 val friends = mutableListOf<FriendResult>()
                 for (i in 0 until data.length()) {
                     val obj = data.getJSONObject(i)
@@ -86,25 +118,32 @@ class AddFriendActivity : AppCompatActivity() {
                         FriendResult(
                             userId = obj.getString("user_id"),
                             username = obj.getString("username"),
-                            profilePicture = obj.optString("profile_picture", null)
+                            profilePicture = obj.optString("profile_picture", null),
+                            status = obj.optString("status", "not connected")
                         )
                     )
                 }
 
                 runOnUiThread {
-                    adapter.updateList(friends)
+                    if (friends.isEmpty()) {
+                        textSearchInfo.text = "Tidak ada hasil untuk \"$keyword\""
+                        adapter.updateList(mutableListOf())
+                    } else {
+                        textSearchInfo.text = "Ditemukan ${friends.size} hasil untuk \"$keyword\""
+                        adapter.updateList(friends)
+                    }
                     textSearchInfo.visibility = TextView.VISIBLE
-                    textSearchInfo.text = "Ditemukan ${friends.size} hasil untuk \"$keyword\""
                 }
 
             } catch (e: Exception) {
                 e.printStackTrace()
                 runOnUiThread {
-                    Toast.makeText(this, "Gagal mencari teman", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Gagal mencari teman: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
+
 
     private fun sendFriendRequest(receiverId: String) {
         thread {

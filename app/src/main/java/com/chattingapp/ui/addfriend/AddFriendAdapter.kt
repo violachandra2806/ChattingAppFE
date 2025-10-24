@@ -33,6 +33,7 @@ class AddFriendAdapter(
         if (friend.requested) {
             holder.btnAdd.text = "Menunggu"
             holder.btnAdd.isEnabled = false
+            holder.btnAdd.alpha = 0.6f
             holder.btnAdd.setCompoundDrawablesWithIntrinsicBounds(
                 R.drawable.ic_clock,
                 0,
@@ -42,6 +43,7 @@ class AddFriendAdapter(
         } else {
             holder.btnAdd.text = "Tambah teman"
             holder.btnAdd.isEnabled = true
+            holder.btnAdd.alpha = 1f
             holder.btnAdd.setCompoundDrawablesWithIntrinsicBounds(
                 R.drawable.ic_add,
                 0,
@@ -52,10 +54,11 @@ class AddFriendAdapter(
 
 
         holder.btnAdd.setOnClickListener {
-            friend.requested = true
+            friend.status = "requested"
             notifyItemChanged(position)
             onRequestSent(friend)
         }
+
     }
 
     override fun getItemCount() = results.size
