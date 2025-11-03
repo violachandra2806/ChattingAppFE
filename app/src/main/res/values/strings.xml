@@ -1,11 +1,16 @@
 <resources>
 
+
+    <string name="title_home">Chatting App</string>
+    <string name="title_dashboard">Chatting App</string>
+    <string name="title_notifications">Chatting App</string>
+
     // Start App
     <string name="app_name">Chatting App</string>
     <string name="my_app">MyApp</string>
-    <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="title_chat">Pesan</string>
+    <string name="title_friend">Teman</string>
+    <string name="title_setting">Pengaturan</string>
     <string name="App_Description">Aplikasi chat untuk pengguna tuli, bisu, dan pendengar dengan teks, terjemahan video, dan transkripsi suara.</string>
     <string name="app_Login_button">Masuk</string>
     <string name="app_Register_button">Daftar</string>

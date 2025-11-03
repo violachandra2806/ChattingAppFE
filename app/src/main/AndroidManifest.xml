@@ -3,8 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.chattingapp">
 
-    <!-- Required for internet/network access -->
+    <!-- ✅ Required for internet/network access -->
     <uses-permission android:name="android.permission.INTERNET" />
+
 
     <application
         android:allowBackup="true"
@@ -45,7 +46,6 @@
         <!-- Login Activity -->
         <activity
             android:name=".ui.login.LoginActivity"
-            android:exported="false"
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
@@ -61,6 +61,23 @@
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
-    </application>
+        <!-- Friendlist Activity -->
+        <activity
+            android:name=".ui.friendlist.FriendListActivity"
+            android:exported="true"
+            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+            android:windowSoftInputMode="adjustResize" >
+
+        </activity>
+
+        <!-- Friend Request Activity -->
+        <activity
+            android:name=".ui.friendrequest.FriendRequestActivity"/>
+
+        <!-- Add Friend Activity -->
+        <activity
+            android:name=".ui.addfriend.AddFriendActivity"/>
+
+</application>
 
 </manifest>

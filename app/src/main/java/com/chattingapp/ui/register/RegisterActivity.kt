@@ -7,20 +7,17 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.text.method.PasswordTransformationMethod
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.ui.semantics.error
-import androidx.compose.ui.semantics.text
 import com.chattingapp.R
+import com.chattingapp.BuildConfig
 import com.chattingapp.ui.login.LoginActivity
+import com.android.volley.Request
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
+import org.json.JSONObject
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import java.util.*
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -42,6 +39,7 @@ class RegisterActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
+        // 🔹 Inisialisasi komponen UI
         editTextEmail = findViewById(R.id.editTextEmail)
         editTextUsername = findViewById(R.id.editTextUsername)
         editTextDateOfBirth = findViewById(R.id.editTextDateOfBirth)
@@ -53,10 +51,10 @@ class RegisterActivity : AppCompatActivity() {
         alreadyHaveAccount = findViewById(R.id.alreadyHaveAccount)
         googleLogin = findViewById(R.id.buttonGoogle)
 
-        editTextDateOfBirth.setOnClickListener {
-            showDatePickerDialog()
-        }
+        // 🔹 Date picker
+        editTextDateOfBirth.setOnClickListener { showDatePickerDialog() }
 
+        // 🔹 Password visibility toggle
         setupPasswordToggle(editTextPassword, togglePasswordVisibility) { visible ->
             isPasswordVisible = visible
         }
@@ -64,21 +62,24 @@ class RegisterActivity : AppCompatActivity() {
             isConfirmPasswordVisible = visible
         }
 
-        buttonRegister.setOnClickListener {
-            handleRegister()
-        }
+        buttonRegister.setOnClickListener { handleRegister() }
 
         alreadyHaveAccount.setOnClickListener {
-             startActivity(Intent(this, LoginActivity::class.java))
-             finish()
-         }
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+        }
 
+        // 🔹 Google login (belum diimplementasi)
         googleLogin.setOnClickListener {
             Toast.makeText(this, "Google login belum diimplementasi", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun setupPasswordToggle(passwordField: EditText, toggleView: ImageView, updateVisibilityState: (Boolean) -> Unit) {
+    private fun setupPasswordToggle(
+        passwordField: EditText,
+        toggleView: ImageView,
+        updateVisibilityState: (Boolean) -> Unit
+    ) {
         passwordField.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -93,15 +94,15 @@ class RegisterActivity : AppCompatActivity() {
                 passwordField.transformationMethod = PasswordTransformationMethod.getInstance()
                 toggleView.setImageResource(R.drawable.ic_visibility_off)
             } else {
-                passwordField.transformationMethod = null // Show password
+                passwordField.transformationMethod = null
                 toggleView.setImageResource(R.drawable.ic_visibility_on)
             }
             passwordField.setSelection(passwordField.text.length)
             updateVisibilityState(!currentlyVisible)
         }
+
         toggleView.visibility = if (passwordField.text.isNullOrEmpty()) View.GONE else View.VISIBLE
     }
-
 
     private fun showDatePickerDialog() {
         val calendar = Calendar.getInstance()
@@ -139,28 +140,61 @@ class RegisterActivity : AppCompatActivity() {
 
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             editTextEmail.error = "Format email tidak valid"
-            Toast.makeText(this, "Format email tidak valid", Toast.LENGTH_SHORT).show()
             return
         }
 
-        if (password.length < 6) { // Contoh validasi panjang password
-            editTextPassword.error = "Password minimal 6 karakter"
-            Toast.makeText(this, "Password minimal 6 karakter", Toast.LENGTH_SHORT).show()
+        if (password.length < 8) {
+            editTextPassword.error = "Password minimal 8 karakter"
             return
         }
 
         if (password != confirmPassword) {
             editTextConfirmPassword.error = "Konfirmasi password tidak cocok"
-            Toast.makeText(this, "Konfirmasi password tidak cocok", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // TODO: Implementasikan logika registrasi sebenarnya di sini
-        // (Contoh: kirim data ke server, simpan ke database lokal, dll.)
-        Toast.makeText(this, "Registrasi berhasil (Simulasi)", Toast.LENGTH_LONG).show()
+        // 🔹 Kirim ke backend Flask
+        registerUserToBackend(email, username, password)
+    }
 
-         val intent = Intent(this, LoginActivity::class.java)
-         startActivity(intent)
-         finishAffinity()
+    private fun registerUserToBackend(email: String, username: String, password: String) {
+        val url = "${BuildConfig.BASE_URL}registeruser"
+
+        val requestBody = JSONObject().apply {
+            put("user_email", email)
+            put("username", username)
+            put("password", password)
+            put("profile_picture", "")
+        }
+
+        val request = JsonObjectRequest(
+            Request.Method.POST, url, requestBody,
+            { response ->
+                try {
+                    val status = response.getString("status")
+                    val message = response.getString("message")
+
+                    if (status == "success") {
+                        Toast.makeText(this, "Registrasi berhasil!", Toast.LENGTH_SHORT).show()
+                        startActivity(Intent(this, LoginActivity::class.java))
+                        finishAffinity()
+                    } else {
+                        Toast.makeText(this, "Gagal: $message", Toast.LENGTH_SHORT).show()
+                    }
+
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Kesalahan parsing data", Toast.LENGTH_SHORT).show()
+                    e.printStackTrace()
+                }
+            },
+            { error ->
+                val errorMsg = error.networkResponse?.let {
+                    String(it.data, Charsets.UTF_8)
+                } ?: error.message ?: "Error tidak diketahui"
+                Toast.makeText(this, "Gagal register: $errorMsg", Toast.LENGTH_LONG).show()
+            }
+        )
+
+        Volley.newRequestQueue(this).add(request)
     }
 }

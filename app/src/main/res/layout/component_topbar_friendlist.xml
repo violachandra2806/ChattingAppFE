@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.appbar.MaterialToolbar xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/topAppBar"
+    android:layout_width="match_parent"
+    android:layout_height="?attr/actionBarSize"
+    android:background="@color/light_purple"
+    android:padding="2dp"
+    app:contentInsetStart="0dp"
+    app:contentInsetEnd="0dp">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/buttonAddFriend"
+        android:layout_width="169dp"
+        android:layout_height="38dp"
+        android:layout_gravity="end"
+        android:fontFamily="@font/poppins_bold"
+        android:padding="4dp"
+        android:layout_marginEnd="12dp"
+        android:text="Tambah Teman"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:elevation="4dp"
+        app:backgroundTint="@color/lighter_purple"
+        app:cornerRadius="19dp"
+        app:icon="@drawable/ic_person_add"
+        app:iconSize="16dp"
+        app:iconGravity="textStart"
+        app:iconTint="@color/white" />
+</com.google.android.material.appbar.MaterialToolbar>
