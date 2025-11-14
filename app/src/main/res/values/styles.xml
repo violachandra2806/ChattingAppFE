@@ -40,6 +40,12 @@
         <item name="android:textAllCaps">false</item>
         <item name="android:drawablePadding">6dp</item>
     </style>
+    <!-- Splash Screen Theme -->
+    <style name="Theme.ChattingApp.Splash" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:statusBarColor">@color/light_purple</item>
+        <item name="android:navigationBarColor">@color/light_purple</item>
+    </style>
 
 
 

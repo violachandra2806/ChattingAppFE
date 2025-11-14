@@ -1,4 +1,4 @@
-package com.chattingapp.ui.friendrequest
+package com.chattingapp.ui.friendlist.friendrequest
 
 data class FriendRequest(
     val requestId: String,

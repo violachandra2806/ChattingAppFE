@@ -14,9 +14,10 @@ import com.android.volley.toolbox.Volley
 import com.chattingapp.BuildConfig
 import com.chattingapp.R
 import com.chattingapp.MainActivity
+import com.chattingapp.ui.dashboard.DashboardActivity
 import com.chattingapp.ui.forgotpassword.ForgotPasswordActivity
-import com.chattingapp.ui.friendlist.FriendListActivity
-import com.chattingapp.ui.friendrequest.FriendRequestActivity
+import com.chattingapp.ui.friendlist.FriendListFragment
+import com.chattingapp.ui.friendlist.friendrequest.FriendRequestActivity
 import com.chattingapp.ui.register.RegisterActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -97,6 +98,11 @@ class LoginActivity : AppCompatActivity() {
 
     private fun loginUser(email: String, password: String) {
         val url = "${BuildConfig.BASE_URL}loginuser"
+        Log.d("Login", "=== LOGIN DEBUG ===")
+        Log.d("Login", "URL: $url")
+        Log.d("Login", "Email: $email")
+        Log.d("Login", "BASE_URL: ${BuildConfig.BASE_URL}")
+
         val requestBody = JSONObject().apply {
             put("identifier", email)
             put("password", password)
@@ -106,41 +112,63 @@ class LoginActivity : AppCompatActivity() {
             Request.Method.POST, url, requestBody,
             { response ->
                 try {
+                    Log.d("Login", "Response received: $response")
                     when (response.getString("status")) {
                         "success" -> {
+                            Log.d("Login", "Login successful, processing user data...")
                             val userData = response.getJSONArray("data").getJSONObject(0)
                             val userId = userData.getString("user_id")
                             val username = userData.getString("username")
                             val email = userData.getString("user_email")
 
+                            Log.d("Login", "User ID: $userId, Username: $username")
+
+                            // FIX: Use SharedPreferencesManager instead of direct SharedPreferences
+                            val sharedPreferencesManager = com.chattingapp.utils.SharedPreferencesManager(this)
+                            sharedPreferencesManager.setUserId(userId)
+
+                            // Also save to the old location for backward compatibility
                             val sharedPref = getSharedPreferences("UserData", MODE_PRIVATE)
                             val editor = sharedPref.edit()
                             editor.putString("user_id", userId)
                             editor.putString("username", username)
                             editor.putString("email", email)
                             editor.apply()
+
+                            // Verify the data was saved
+                            val savedUserId = sharedPreferencesManager.getUserId()
+                            Log.d("Login", "Verified saved User ID from SharedPreferencesManager: $savedUserId")
+
                             Toast.makeText(this, "Login berhasil!", Toast.LENGTH_SHORT).show()
 
-                            startActivity(Intent(this, FriendListActivity::class.java))
+                            Log.d("Login", "Starting DashboardActivity...")
+                            // Navigate to DashboardActivity (main app)
+                            val intent = Intent(this, DashboardActivity::class.java)
+                            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+                            startActivity(intent)
+                            overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
                             finish()
                         }
-                        else -> Toast.makeText(
-                            this,
-                            response.getString("message"),
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        else -> {
+                            Log.d("Login", "Login failed: ${response.getString("message")}")
+                            Toast.makeText(
+                                this,
+                                response.getString("message"),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 } catch (e: Exception) {
-                    Log.e("Login", "JSON Parsing Error: ${e.message}")
+                    Log.e("Login", "JSON Parsing Error: ${e.message}", e)
                     Toast.makeText(this, "Terjadi kesalahan", Toast.LENGTH_SHORT).show()
                 }
             },
             { error ->
+                Log.e("Login", "Volley Error: ${error.message}", error)
                 val errorMsg = error.networkResponse?.let {
                     String(it.data, Charsets.UTF_8)
                 } ?: error.message ?: "Error tidak diketahui"
                 Toast.makeText(this, "Gagal login: $errorMsg", Toast.LENGTH_SHORT).show()
-                Log.e("Login", "Volley Error: ${error.message}")
             }
         )
 

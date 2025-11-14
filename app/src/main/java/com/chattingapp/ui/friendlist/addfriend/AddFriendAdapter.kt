@@ -1,4 +1,4 @@
-package com.chattingapp.ui.addfriend
+package com.chattingapp.ui.friendlist.addfriend
 
 import android.view.LayoutInflater
 import android.view.View

@@ -7,7 +7,7 @@ import android.os.Looper
 import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import com.chattingapp.databinding.ActivityMainBinding
-import com.chattingapp.ui.startapp.StartAppActivity
+import com.chattingapp.ui.login.LoginActivity
 
 class MainActivity : AppCompatActivity() {
 
@@ -22,9 +22,9 @@ class MainActivity : AppCompatActivity() {
         val scaleUp = AnimationUtils.loadAnimation(this, R.anim.scale_up)
         binding.logoImage.startAnimation(scaleUp)
 
-        // Delay then go to StartAppActivity with fade transition
+        // Delay then go to LoginActivity with fade transition
         Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this, StartAppActivity::class.java))
+            startActivity(Intent(this, LoginActivity::class.java))
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
             finish()
         }, 2000) // 2 seconds delay

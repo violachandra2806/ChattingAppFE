@@ -1,4 +1,4 @@
-package com.chattingapp.ui.friendrequest
+package com.chattingapp.ui.friendlist.friendrequest
 
 import android.content.Context
 import android.content.Intent
@@ -15,7 +15,7 @@ import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.chattingapp.R
-import com.chattingapp.ui.addfriend.AddFriendActivity
+import com.chattingapp.ui.friendlist.addfriend.AddFriendActivity
 import com.google.android.material.button.MaterialButton
 import org.json.JSONObject
 import com.chattingapp.BuildConfig

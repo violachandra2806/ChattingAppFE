@@ -5,6 +5,9 @@ data class ChatRoom(
     val username: String,
     val profilePicture: String?,
     val lastMessage: String,
+    val lastMessageAt: String,
     val time: String,
-    val unreadCount: Int
+    val unreadCount: Int,
+    val userIdFirst: String,
+    val userIdSecond: String
 )

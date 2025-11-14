@@ -1,4 +1,4 @@
-package com.chattingapp.ui.addfriend
+package com.chattingapp.ui.friendlist.addfriend
 
 data class FriendResult(
     val userId: String,

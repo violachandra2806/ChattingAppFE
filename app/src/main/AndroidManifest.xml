@@ -18,25 +18,18 @@
         tools:targetApi="31"
         android:usesCleartextTraffic="true">
 
-        <!-- Splash Screen Activity (New Main Entry Point) -->
+        <!-- SplashScreen as Launcher (First Screen) -->
         <activity
             android:name=".ui.startapp.SplashScreen"
             android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.ChattingApp">
+            android:theme="@style/Theme.ChattingApp" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Main Activity (Removed LAUNCHER category) -->
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:theme="@style/Theme.ChattingApp" />
-
-        <!-- Start App Activity -->
+        <!-- StartApp Activity (Welcome Screen with Login/Register buttons) -->
         <activity
             android:name=".ui.startapp.StartAppActivity"
             android:exported="false"
@@ -45,38 +38,39 @@
         <!-- Login Activity -->
         <activity
             android:name=".ui.login.LoginActivity"
+            android:exported="false"
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- Register Activity -->
         <activity
             android:name=".ui.register.RegisterActivity"
+            android:exported="false"
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
         <!-- Forgot Password Activity -->
         <activity
             android:name=".ui.forgotpassword.ForgotPasswordActivity"
+            android:exported="false"
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
-        <!-- Friendlist Activity -->
+        <!-- Main Dashboard Activity (Hosts Fragments) - Main app after login -->
         <activity
-            android:name=".ui.friendlist.FriendListActivity"
-            android:exported="true"
-            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
-            android:windowSoftInputMode="adjustResize" >
-
-        </activity>
+            android:name=".ui.dashboard.DashboardActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ChattingApp" />
 
         <!-- Friend Request Activity -->
         <activity
-            android:name=".ui.friendrequest.FriendRequestActivity"/>
+            android:name=".ui.friendlist.friendrequest.FriendRequestActivity"
+            android:exported="false"/>
 
         <!-- Add Friend Activity -->
         <activity
-            android:name=".ui.addfriend.AddFriendActivity"/>
+            android:name=".ui.friendlist.addfriend.AddFriendActivity"
+            android:exported="false"/>
 
-</application>
-
+    </application>
 </manifest>
