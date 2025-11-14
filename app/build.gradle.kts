@@ -18,7 +18,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"http://192.168.100.12:8080/chattingapp/\"") }
+        buildConfigField("String", "BASE_URL", "\"http://localhost:8080/chattingapp/\"") }
 
     buildTypes {
         release {
@@ -98,4 +98,11 @@ dependencies {
 
     // Google
     implementation("com.google.android.gms:play-services-auth:21.0.0")
+
+    // Socket.IO client for Android
+    implementation("io.socket:socket.io-client:2.0.1")
+    implementation("org.json:json:20231013")
+
+    // Glide
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 }

@@ -1,0 +1,8 @@
+<!-- search_background.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <!-- Fill color inside the box -->
+    <solid android:color="@color/grey_background"/>
+    <!-- Rounded corners -->
+    <corners android:radius="50dp"/>
+    <!-- Remove the padding from here -->
+</shape>

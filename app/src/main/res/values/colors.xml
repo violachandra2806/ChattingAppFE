@@ -12,4 +12,9 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="white_bone">#F5F5F5</color>
+
+    <!-- Add these for your search background -->
+    <color name="grey_background">#F5F5F5</color>
+    <color name="grey_hint">#9E9E9E</color>
+    <color name="grey_border">#E0E0E0</color>
 </resources>
