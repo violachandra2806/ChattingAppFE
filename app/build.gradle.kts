@@ -18,7 +18,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"http://192.168.0.183:8080/chattingapp/\"") }
+        buildConfigField("String", "BASE_URL", "\"http://192.168.100.12:8080/chattingapp/\"") }
 
     buildTypes {
         release {
@@ -29,6 +29,7 @@ android {
             )
         }
     }
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -44,6 +45,8 @@ android {
         // Enable Compose only if you’re using it
         compose = true
         buildConfig = true
+        //noinspection DataBindingWithoutKapt
+        dataBinding = true
     }
 
     composeOptions {
@@ -52,9 +55,6 @@ android {
 }
 
 dependencies {
-    // Material Components
-    implementation("com.google.android.material:material:1.12.0")
-
     // Core AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -105,4 +105,13 @@ dependencies {
 
     // Glide
     implementation("com.github.bumptech.glide:glide:4.16.0")
+
+    // Okhttp
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Realtime setup
+    implementation ("io.github.jan-tennert.supabase:realtime-kt:2.0.0")
+    implementation ("io.github.jan-tennert.supabase:postgrest-kt:2.0.0")
+    implementation ("io.ktor:ktor-client-okhttp:2.3.7")
 }

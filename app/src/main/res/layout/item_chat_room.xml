@@ -28,10 +28,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toEndOf="@id/profileImage"
+            android:layout_toStartOf="@id/tvTime"
             android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
             android:text="Username"
             android:textStyle="bold"
-            android:textSize="16sp"/>
+            android:textSize="16sp"
+            android:maxLines="1"
+            android:ellipsize="end"/>
 
         <TextView
             android:id="@+id/tvLastMessage"
@@ -39,11 +43,15 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/tvUsername"
             android:layout_toEndOf="@id/profileImage"
+            android:layout_toStartOf="@id/tvUnreadCount"
             android:layout_marginStart="12dp"
             android:layout_marginTop="4dp"
+            android:layout_marginEnd="8dp"
             android:text="Last message preview"
             android:textSize="14sp"
-            android:textColor="#888"/>
+            android:textColor="#888"
+            android:maxLines="1"
+            android:ellipsize="end"/>
 
         <TextView
             android:id="@+id/tvTime"
@@ -66,7 +74,8 @@
             android:text="3"
             android:textColor="#FFFFFF"
             android:textSize="12sp"
-            android:gravity="center"/>
+            android:gravity="center"
+            android:visibility="gone"/>
 
     </RelativeLayout>
 

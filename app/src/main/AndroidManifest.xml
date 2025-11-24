@@ -5,6 +5,8 @@
 
     <!-- ✅ Required for internet/network access -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -18,7 +20,7 @@
         tools:targetApi="31"
         android:usesCleartextTraffic="true">
 
-        <!-- SplashScreen as Launcher (First Screen) -->
+        <!-- Splash Screen Activity (New Main Entry Point) -->
         <activity
             android:name=".ui.startapp.SplashScreen"
             android:exported="true"
@@ -59,6 +61,12 @@
         <!-- Main Dashboard Activity (Hosts Fragments) - Main app after login -->
         <activity
             android:name=".ui.dashboard.DashboardActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ChattingApp" />
+
+        <!-- Chat Room Activity -->
+        <activity
+            android:name=".ui.chat.ChatRoomActivity"
             android:exported="false"
             android:theme="@style/Theme.ChattingApp" />
 

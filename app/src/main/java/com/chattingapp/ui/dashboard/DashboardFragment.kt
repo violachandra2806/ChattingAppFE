@@ -17,8 +17,8 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.chattingapp.BuildConfig
 import com.chattingapp.databinding.FragmentDashboardBinding
+import com.chattingapp.ui.chat.ChatRoomActivity
 import com.chattingapp.utils.SharedPreferencesManager
-import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -139,7 +139,7 @@ class DashboardFragment : Fragment() {
         binding.progressBarBottom.isVisible = currentPage > 1
 
         val searchQuery = binding.searchChat.text.toString().trim()
-        var url = "${BuildConfig.BASE_URL}/getchatroomlist?user_id=$currentUserId&page=$currentPage&limit=$limit"
+        var url = "${BuildConfig.BASE_URL}getchatroomlist?user_id=$currentUserId&page=$currentPage&limit=$limit"
 
         if (searchQuery.isNotEmpty()) {
             url += "&search=$searchQuery"
