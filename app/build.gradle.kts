@@ -18,7 +18,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"http://192.168.100.12:8080/chattingapp/\"") }
+        buildConfigField("String", "BASE_URL", "\"http://192.168.18.41:8080/chattingapp/\"") }
 
     buildTypes {
         release {
@@ -55,6 +55,7 @@ android {
 }
 
 dependencies {
+
     // Core AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -114,4 +115,18 @@ dependencies {
     implementation ("io.github.jan-tennert.supabase:realtime-kt:2.0.0")
     implementation ("io.github.jan-tennert.supabase:postgrest-kt:2.0.0")
     implementation ("io.ktor:ktor-client-okhttp:2.3.7")
+
+    implementation("com.github.bumptech.glide:glide:4.15.1")
+
+    implementation("androidx.camera:camera-core:1.2.3")
+    implementation("androidx.camera:camera-camera2:1.2.3")
+    implementation("androidx.camera:camera-lifecycle:1.2.3")
+    implementation("androidx.camera:camera-video:1.2.3")
+    implementation("androidx.camera:camera-view:1.2.3")
+    implementation("androidx.camera:camera-extensions:1.2.3")
+
+    implementation("com.google.android.material:material:1.9.0")
+
+    // For permissions
+    implementation("com.guolindev.permissionx:permissionx:1.7.1")
 }

@@ -3,10 +3,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.chattingapp">
 
-    <!-- ✅ Required for internet/network access -->
+    <!-- 🌐 Network/Internet Access -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 🎤 Audio Recording (Voice Note, Calls) -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <!-- 📸 Camera (For Photo/Video Messages) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Camera is OPTIONAL (app still works without camera) -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!-- 💾 Storage (for media saving) -->
+    <!-- WRITE only needed <= Android 9 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <!-- READ for all versions -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -17,68 +30,79 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ChattingApp"
-        tools:targetApi="31"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        tools:targetApi="31">
 
-        <!-- Splash Screen Activity (New Main Entry Point) -->
+        <!-- 🚀 Splash Screen (Launcher) -->
         <activity
             android:name=".ui.startapp.SplashScreen"
             android:exported="true"
-            android:theme="@style/Theme.ChattingApp" >
+            android:theme="@style/Theme.ChattingApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- StartApp Activity (Welcome Screen with Login/Register buttons) -->
+        <!-- 🎉 Start App (Login/Register buttons) -->
         <activity
             android:name=".ui.startapp.StartAppActivity"
             android:exported="false"
             android:theme="@style/Theme.ChattingApp" />
 
-        <!-- Login Activity -->
+        <!-- 🔑 Login -->
         <activity
             android:name=".ui.login.LoginActivity"
             android:exported="false"
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
-        <!-- Register Activity -->
+        <!-- 🆕 Register -->
         <activity
             android:name=".ui.register.RegisterActivity"
             android:exported="false"
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
-        <!-- Forgot Password Activity -->
+        <!-- 🔧 Forgot Password -->
         <activity
             android:name=".ui.forgotpassword.ForgotPasswordActivity"
             android:exported="false"
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
-        <!-- Main Dashboard Activity (Hosts Fragments) - Main app after login -->
+        <!-- 📌 Main Dashboard -->
         <activity
             android:name=".ui.dashboard.DashboardActivity"
             android:exported="false"
             android:theme="@style/Theme.ChattingApp" />
 
-        <!-- Chat Room Activity -->
+        <!-- 💬 Chat Room -->
         <activity
             android:name=".ui.chat.ChatRoomActivity"
             android:exported="false"
             android:theme="@style/Theme.ChattingApp" />
 
-        <!-- Friend Request Activity -->
+        <!-- 👥 Friend Requests -->
         <activity
             android:name=".ui.friendlist.friendrequest.FriendRequestActivity"
-            android:exported="false"/>
+            android:exported="false" />
 
-        <!-- Add Friend Activity -->
+        <!-- ➕ Add Friend -->
         <activity
             android:name=".ui.friendlist.addfriend.AddFriendActivity"
-            android:exported="false"/>
+            android:exported="false" />
+
+        <!-- ➕ Video -->
+        <activity
+            android:name=".ui.chat.MediaPreviewActivity"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
+
+        <!-- ➕ Camera Video -->
+        <activity
+            android:name=".ui.chat.CameraActivity"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
 
     </application>
+
 </manifest>

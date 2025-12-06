@@ -20,6 +20,7 @@ import com.chattingapp.databinding.ActivityChatRoomBinding
 import com.chattingapp.ui.chat.adapter.MessageAdapter
 import com.chattingapp.ui.chat.Message
 import com.chattingapp.utils.SupabaseClient
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,6 +41,8 @@ import io.github.jan.supabase.realtime.realtime
 import io.github.jan.supabase.realtime.RealtimeChannel
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import android.content.Intent
+import android.provider.MediaStore
 
 class ChatRoomActivity : AppCompatActivity() {
 
@@ -58,6 +61,9 @@ class ChatRoomActivity : AppCompatActivity() {
     private var currentUserId: String = ""
     private var otherUserId: String = ""
     private var otherUserName: String = ""
+
+    private val REQUEST_CODE_VIDEO_CAPTURE = 101
+    private val REQUEST_CODE_VIDEO_PICK = 102
 
     // replace with your base server if not set in BuildConfig
     private val baseUrl: String = if (BuildConfig.BASE_URL.endsWith("/")) BuildConfig.BASE_URL else BuildConfig.BASE_URL + "/"
@@ -158,8 +164,7 @@ class ChatRoomActivity : AppCompatActivity() {
         }
 
         btnVideo.setOnClickListener {
-            // open picker for video
-            pickMediaLauncher.launch("video/*")
+            showVideoSourceDialog()
         }
 
         // keyboard send
@@ -173,6 +178,85 @@ class ChatRoomActivity : AppCompatActivity() {
                 true
             } else false
         }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (resultCode == RESULT_OK) {
+            when (requestCode) {
+                REQUEST_CODE_VIDEO_CAPTURE, REQUEST_CODE_VIDEO_PICK -> {
+                    val videoUri = data?.data
+                    if (videoUri != null) {
+                        // Open MediaPreviewActivity
+                        val intent = Intent(this, MediaPreviewActivity::class.java).apply {
+                            putExtra(MediaPreviewActivity.EXTRA_VIDEO_URI, videoUri)
+                            putExtra(MediaPreviewActivity.EXTRA_ROOM_ID, roomId)
+                            putExtra(MediaPreviewActivity.EXTRA_SENDER_ID, currentUserId)
+                        }
+                        startActivityForResult(intent, 103) // Use different request code
+                    }
+                }
+                103 -> {
+                    // Video was sent from MediaPreviewActivity
+                    loadMessages() // Refresh messages
+                }
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == REQUEST_CODE_VIDEO_CAPTURE) {
+            if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                startVideoRecording()
+            } else {
+                Toast.makeText(this, "Camera and microphone permissions are required", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun showVideoSourceDialog() {
+        val items = arrayOf("Record Video", "Choose from Gallery")
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Select Video Source")
+            .setItems(items) { dialog, which ->
+                when (which) {
+                    0 -> startVideoRecording()
+                    1 -> pickVideoFromGallery()
+                }
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun startVideoRecording() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO),
+                REQUEST_CODE_VIDEO_CAPTURE
+            )
+            return
+        }
+
+        val intent = Intent(this, CameraActivity::class.java)
+        startActivityForResult(intent, REQUEST_CODE_VIDEO_CAPTURE)
+    }
+
+    private fun pickVideoFromGallery() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+        intent.type = "video/*"
+        startActivityForResult(intent, REQUEST_CODE_VIDEO_PICK)
     }
 
     private fun loadMessages() {
