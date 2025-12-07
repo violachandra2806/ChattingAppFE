@@ -5,11 +5,14 @@ import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.view.View
+import android.widget.ImageView
+import android.widget.RelativeLayout
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
@@ -17,51 +20,55 @@ import androidx.camera.video.*
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.chattingapp.BuildConfig
 import com.chattingapp.R
+import java.io.File
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import androidx.camera.lifecycle.ProcessCameraProvider
+import android.media.MediaMetadataRetriever
 import android.os.Handler
 import android.os.Looper
-import androidx.camera.lifecycle.ProcessCameraProvider
+import kotlinx.coroutines.*
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 
 class CameraActivity : AppCompatActivity() {
+
     private lateinit var previewView: PreviewView
+    private lateinit var loadingOverlay: RelativeLayout   // ⬅️ ADDED
+
     private var videoCapture: VideoCapture<Recorder>? = null
     private var recording: Recording? = null
-    private lateinit var cameraExecutor: ExecutorService
 
     private var recordedVideoUri: Uri? = null
-    private var isFrontCamera = true // Default to front camera
+    private var isFrontCamera = true
+
+    private val client = OkHttpClient()
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+
+    private var videoResolution: String = ""
+    private var videoFps: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
 
         previewView = findViewById(R.id.previewView)
-        cameraExecutor = Executors.newSingleThreadExecutor()
+        loadingOverlay = findViewById(R.id.loadingOverlay)   // ⬅️ INITIALIZED
 
-        if (allPermissionsGranted()) {
-            startCamera()
-        } else {
-            ActivityCompat.requestPermissions(
-                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
-            )
-        }
+        if (allPermissionsGranted()) startCamera()
+        else ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
 
-        findViewById<android.view.View>(R.id.btnRecord).setOnClickListener {
-            captureVideo()
-        }
-
-        findViewById<android.view.View>(R.id.btnFlip).setOnClickListener {
+        findViewById<ImageView>(R.id.btnRecord).setOnClickListener { captureVideo() }
+        findViewById<ImageView>(R.id.btnFlip).setOnClickListener {
             isFrontCamera = !isFrontCamera
-            startCamera() // Rebind camera with new selector
+            startCamera()
         }
-
-        findViewById<android.view.View>(R.id.btnClose).setOnClickListener {
-            finish()
-        }
+        findViewById<ImageView>(R.id.btnClose).setOnClickListener { finish() }
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
@@ -69,25 +76,23 @@ class CameraActivity : AppCompatActivity() {
     }
 
     override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<String>, grantResults: IntArray
+        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            if (allPermissionsGranted()) {
-                startCamera()
-            } else {
-                Toast.makeText(this, "Permissions not granted by the user.", Toast.LENGTH_SHORT).show()
+            if (allPermissionsGranted()) startCamera()
+            else {
+                Toast.makeText(this, "Permission denied.", Toast.LENGTH_SHORT).show()
                 finish()
             }
         }
     }
 
     private fun startCamera() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        val providerFuture = ProcessCameraProvider.getInstance(this)
 
-        cameraProviderFuture.addListener({
-            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-
+        providerFuture.addListener({
+            val provider = providerFuture.get()
             val preview = Preview.Builder().build().also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
@@ -95,115 +100,191 @@ class CameraActivity : AppCompatActivity() {
             val recorder = Recorder.Builder()
                 .setQualitySelector(QualitySelector.from(Quality.HIGHEST))
                 .build()
+
             videoCapture = VideoCapture.withOutput(recorder)
 
-            val cameraSelector = if (isFrontCamera) {
-                CameraSelector.DEFAULT_FRONT_CAMERA
-            } else {
-                CameraSelector.DEFAULT_BACK_CAMERA
-            }
+            val selector = if (isFrontCamera) CameraSelector.DEFAULT_FRONT_CAMERA
+            else CameraSelector.DEFAULT_BACK_CAMERA
 
-            try {
-                // Unbind all use cases first
-                cameraProvider.unbindAll()
-                // Bind use cases to lifecycle
-                cameraProvider.bindToLifecycle(
-                    this, cameraSelector, preview, videoCapture
-                )
-            } catch (exc: Exception) {
-                Log.e(TAG, "Use case binding failed", exc)
-            }
+            provider.unbindAll()
+            provider.bindToLifecycle(this, selector, preview, videoCapture)
+
         }, ContextCompat.getMainExecutor(this))
     }
 
+    /// ▶️ Metadata extractor (resolution & fps)
+    private fun extractMetadata(uri: Uri) {
+        try {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(this, uri)
+
+            val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)?.toInt() ?: 0
+            val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)?.toInt() ?: 0
+            videoResolution = "${width}x${height}"
+
+            val fpsString = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE)
+            videoFps = fpsString?.toFloat()?.toInt() ?: 30
+
+            retriever.release()
+
+            Log.d("VIDEO_META", "Resolution = $videoResolution, FPS = $videoFps")
+
+        } catch (e: Exception) {
+            videoResolution = "Unknown"
+            videoFps = 30
+            Log.e("VIDEO_META", "Metadata extract failed: ${e.localizedMessage}")
+        }
+    }
+
     private fun captureVideo() {
-        val btnRecord = findViewById<android.view.View>(R.id.btnRecord)
+        val btnRecord = findViewById<ImageView>(R.id.btnRecord)
 
         if (recording != null) {
-            // Stop recording
             recording?.stop()
             recording = null
-            btnRecord.setBackgroundResource(R.drawable.ic_record)
-
-            // Return the recorded video with a small delay to ensure file is saved
-            Handler(Looper.getMainLooper()).postDelayed({
-                recordedVideoUri?.let { uri ->
-                    val resultIntent = Intent().apply {
-                        data = uri
-                    }
-                    setResult(RESULT_OK, resultIntent)
-                    finish()
-                }
-            }, 500)
+            btnRecord.setImageResource(R.drawable.ic_record)
             return
         }
 
-        // Start recording
-        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis())
-        val contentValues = ContentValues().apply {
+        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+            .format(System.currentTimeMillis())
+
+        val values = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
             put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4")
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-                put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/CameraX-Video")
-            }
         }
 
-        val mediaStoreOutputOptions = MediaStoreOutputOptions
-            .Builder(contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-            .setContentValues(contentValues)
-            .build()
-
-        if (ActivityCompat.checkSelfPermission(
-                this, Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(
-                this, arrayOf(Manifest.permission.RECORD_AUDIO),
-                REQUEST_CODE_PERMISSIONS
-            )
-            return
-        }
+        val options = MediaStoreOutputOptions.Builder(
+            contentResolver,
+            MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+        ).setContentValues(values).build()
 
         recording = videoCapture?.output
-            ?.prepareRecording(this, mediaStoreOutputOptions)
-            ?.withAudioEnabled()
-            ?.start(ContextCompat.getMainExecutor(this)) { recordEvent ->
-                when (recordEvent) {
-                    is VideoRecordEvent.Start -> {
-                        btnRecord.setBackgroundResource(R.drawable.ic_stop)
-                    }
+            ?.prepareRecording(this, options)
+            ?.apply {
+                if (ContextCompat.checkSelfPermission(
+                        this@CameraActivity, Manifest.permission.RECORD_AUDIO
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) withAudioEnabled()
+            }
+            ?.start(ContextCompat.getMainExecutor(this)) { event ->
+                when (event) {
+                    is VideoRecordEvent.Start -> btnRecord.setImageResource(R.drawable.ic_stop)
                     is VideoRecordEvent.Finalize -> {
-                        if (!recordEvent.hasError()) {
-                            @Suppress("DEPRECATION")
-                            recordedVideoUri = recordEvent.outputResults.outputUri
-                        } else {
-                            recording?.close()
-                            recording = null
-                            Toast.makeText(this, "Recording failed: ${recordEvent.error}", Toast.LENGTH_SHORT).show()
-                        }
-                        btnRecord.setBackgroundResource(R.drawable.ic_record)
+                        btnRecord.setImageResource(R.drawable.ic_record)
+                        if (!event.hasError()) {
+                            recordedVideoUri = event.outputResults.outputUri
+
+                            /// 🆕 Read real metadata
+                            extractMetadata(recordedVideoUri!!)
+
+                            Handler(Looper.getMainLooper()).postDelayed({
+                                uploadVideo()
+                            }, 500)
+                        } else Toast.makeText(this, "Recording failed!", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
+    }
+
+    private fun uriToFile(uri: Uri): File? {
+        return try {
+            val inputStream = contentResolver.openInputStream(uri) ?: return null
+            val tempFile = File.createTempFile("video_", ".mp4", cacheDir)
+            val output = FileOutputStream(tempFile)
+            inputStream.copyTo(output)
+            output.close()
+            inputStream.close()
+            tempFile
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun uploadVideo() {
+        loadingOverlay.visibility = View.VISIBLE
+
+        val uri = recordedVideoUri ?: return hideAndError("Failed preparing video!")
+        val file = uriToFile(uri) ?: return hideAndError("Failed preparing video!")
+
+        val requestBody = MultipartBody.Builder().setType(MultipartBody.FORM)
+            .addFormDataPart("video", file.name, file.asRequestBody("video/mp4".toMediaTypeOrNull()))
+            .addFormDataPart("resolution", videoResolution)
+            .addFormDataPart("frame_rate", videoFps.toString())
+            .build()
+
+        val request = Request.Builder()
+            .url("${BuildConfig.BASE_URL}uploadvideonote")
+            .post(requestBody)
+            .build()
+
+        Log.d("UPLOAD_VIDEO", "Upload URL = ${request.url}")
+        Log.d("UPLOAD_VIDEO", "Uploading file: ${file.name}, size=${file.length()} bytes")
+
+        scope.launch(Dispatchers.IO) {
+            try {
+                val response = client.newCall(request).execute()
+                val responseBody = response.body?.string()
+
+                Log.d("UPLOAD_VIDEO", "Response code: ${response.code}")
+                Log.d("UPLOAD_VIDEO", "Response body: $responseBody")
+
+                withContext(Dispatchers.Main) {
+                    loadingOverlay.visibility = View.GONE
+
+                    if (response.isSuccessful) {
+                        Log.i("UPLOAD_VIDEO", "✅ Upload Success")
+
+                        // CHANGE THIS: Return both URI and file path
+                        setResult(RESULT_OK, Intent().apply {
+                            data = uri
+                            putExtra("video_file_path", file.absolutePath) // ADD THIS
+                            putExtra("video_file_name", file.name) // ADD THIS
+                            putExtra("video_resolution", videoResolution) // ADD THIS
+                            putExtra("video_fps", videoFps) // ADD THIS
+                        })
+                        finish()
+                    } else {
+                        Log.e("UPLOAD_VIDEO", "❌ Upload failed: ${response.message}")
+                        showErrorDialog("Upload failed: ${response.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("UPLOAD_VIDEO", "❌ Error: ${e.localizedMessage}")
+                withContext(Dispatchers.Main) {
+                    loadingOverlay.visibility = View.GONE
+                    showErrorDialog(e.message ?: "Network error")
+                }
+            }
+        }
+    }
+
+    private fun hideAndError(msg: String) {
+        loadingOverlay.visibility = View.GONE
+        showErrorDialog(msg)
+    }
+
+    private fun showErrorDialog(msg: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Upload Failed")
+            .setMessage(msg)
+            .setCancelable(false)
+            .setPositiveButton("Retry") { _, _ -> uploadVideo() }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        cameraExecutor.shutdown()
+        scope.cancel()
     }
 
     companion object {
-        private const val TAG = "CameraActivity"
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
-        private val REQUIRED_PERMISSIONS =
-            mutableListOf (
-                Manifest.permission.CAMERA,
-                Manifest.permission.RECORD_AUDIO
-            ).apply {
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-                    add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                }
-            }.toTypedArray()
+        private val REQUIRED_PERMISSIONS = arrayOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO
+        )
     }
 }
