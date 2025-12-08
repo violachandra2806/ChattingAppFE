@@ -12,10 +12,10 @@ lifecycleLivedataKtx = "2.9.1"
 lifecycleViewmodelKtx = "2.9.1"
 navigationFragmentKtx = "2.6.0"
 navigationUiKtx = "2.6.0"
-composeBom = "2024.03.00"                        # ✅ Added missing composeBom version
-activityCompose = "1.9.0"                        # ✅ Added missing activity-compose version
+composeBom = "2024.03.00"
+activityCompose = "1.9.0"
 lifecycleRuntimeKtx = "2.6.2"
-volley = "1.2.1"                    # ✅ Added missing lifecycle-runtime-ktx version
+volley = "1.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
