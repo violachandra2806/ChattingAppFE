@@ -6,7 +6,9 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.chattingapp.R
+import com.google.android.material.imageview.ShapeableImageView
 
 class FriendAdapter(
     private var displayedList: List<Friend>,
@@ -14,9 +16,9 @@ class FriendAdapter(
 ) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
 
     inner class FriendViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val avatar: TextView = itemView.findViewById(R.id.avatar)
         val username: TextView = itemView.findViewById(R.id.username)
         val chatIcon: ImageView = itemView.findViewById(R.id.chatIcon)
+        val profileImage: ShapeableImageView = itemView.findViewById(R.id.profileImage)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FriendViewHolder {
@@ -27,9 +29,13 @@ class FriendAdapter(
 
     override fun onBindViewHolder(holder: FriendViewHolder, position: Int) {
         val friend = displayedList[position]
-        holder.avatar.text = friend.initials
-        holder.avatar.background.setTint(friend.color)
         holder.username.text = friend.username
+
+        // Load profile picture
+        Glide.with(holder.itemView.context)
+            .load(friend.profilePicture)
+            .placeholder(R.drawable.ic_person_placeholder)
+            .into(holder.profileImage)
 
         holder.chatIcon.setOnClickListener {
             onChatClick(friend)

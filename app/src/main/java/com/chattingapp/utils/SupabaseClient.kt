@@ -1,15 +1,38 @@
 package com.chattingapp.utils
 
+import android.content.Context
+import android.util.Log
+import com.chattingapp.BuildConfig
+import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
+import io.github.jan.supabase.storage.Storage
+import io.ktor.client.engine.cio.CIO
 
 object SupabaseClient {
-    val client = createSupabaseClient(
-        supabaseUrl = "https://nxagvhkldfxenczfahch.supabase.co",
-        supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54YWd2aGtsZGZ4ZW5jemZhaGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0ODc4NTUsImV4cCI6MjA2MzA2Mzg1NX0.6fxDR2kDAzIbey_anvHyOM6FKhbcvOfPN0LMsKp2BuE"
-    ) {
-        install(Postgrest)
-        install(Realtime)
+    private var client: SupabaseClient? = null
+
+    fun getClient(context: Context): SupabaseClient {
+        if (client == null) {
+            Log.d("SupabaseClient", "Creating new Supabase client...")
+            Log.d("SupabaseClient", "URL: ${BuildConfig.SUPABASE_URL}")
+
+            client = createSupabaseClient(
+                supabaseUrl = BuildConfig.SUPABASE_URL,
+                supabaseKey = BuildConfig.SUPABASE_ANON_KEY
+            ) {
+                httpEngine = CIO.create()
+
+                install(Postgrest)
+                install(Realtime) {
+                    // Tambahkan config realtime jika perlu
+                }
+                install(Storage)
+            }
+
+            Log.d("SupabaseClient", "✅ Supabase client created successfully")
+        }
+        return client!!
     }
 }

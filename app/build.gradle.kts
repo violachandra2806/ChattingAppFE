@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     // Optional: only if you're using Compose
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -18,7 +19,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"http://192.168.100.12:8080/chattingapp/\"") }
+        buildConfigField("String", "BASE_URL", "\"http:///192.168.100.12:8080/chattingapp/\"")
+        buildConfigField("String", "SUPABASE_URL", "\"https://nxagvhkldfxenczfahch.supabase.co\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54YWd2aGtsZGZ4ZW5jemZhaGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0ODc4NTUsImV4cCI6MjA2MzA2Mzg1NX0.6fxDR2kDAzIbey_anvHyOM6FKhbcvOfPN0LMsKp2BuE\"")
+    }
 
     buildTypes {
         release {
@@ -34,6 +38,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -42,11 +47,11 @@ android {
 
     buildFeatures {
         viewBinding = true
+        //noinspection DataBindingWithoutKapt
+        dataBinding = true
         // Enable Compose only if you’re using it
         compose = true
         buildConfig = true
-        //noinspection DataBindingWithoutKapt
-        dataBinding = true
     }
 
     composeOptions {
@@ -110,8 +115,25 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    // Realtime setup
-    implementation ("io.github.jan-tennert.supabase:realtime-kt:2.0.0")
-    implementation ("io.github.jan-tennert.supabase:postgrest-kt:2.0.0")
-    implementation ("io.ktor:ktor-client-okhttp:2.3.7")
+    // Supabase Realtime
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.0.2"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:realtime-kt")
+    implementation("io.github.jan-tennert.supabase:storage-kt")
+
+    // Ktor (required by Supabase SDK)
+    implementation("io.ktor:ktor-client-android:3.0.1")
+    implementation("io.ktor:ktor-client-core:3.0.1")
+    implementation("io.ktor:ktor-client-cio:3.0.1")
+    implementation("io.ktor:ktor-client-websockets:3.0.1")
+    implementation("io.ktor:ktor-utils:3.0.1")
+
+    // Kotlin Serialization (already added)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+
+    // Waveform
+    implementation("com.github.lincollincol:amplituda:2.2.2")
+
+    // Format Time
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }

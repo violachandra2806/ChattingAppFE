@@ -15,7 +15,6 @@ class AddFriendAdapter(
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val username: TextView = itemView.findViewById(R.id.username)
-        val avatar: TextView = itemView.findViewById(R.id.avatar)
         val btnAdd: Button = itemView.findViewById(R.id.btnAddFriend)
     }
 
@@ -28,7 +27,6 @@ class AddFriendAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val friend = results[position]
         holder.username.text = friend.username
-        holder.avatar.text = friend.username.first().toString().uppercase()
 
         if (friend.requested) {
             holder.btnAdd.text = "Menunggu"

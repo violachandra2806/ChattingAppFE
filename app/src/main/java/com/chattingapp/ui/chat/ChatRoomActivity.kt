@@ -18,7 +18,6 @@ import com.chattingapp.BuildConfig
 import com.chattingapp.R
 import com.chattingapp.databinding.ActivityChatRoomBinding
 import com.chattingapp.ui.chat.adapter.MessageAdapter
-import com.chattingapp.ui.chat.Message
 import com.chattingapp.utils.SupabaseClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,68 +35,92 @@ import java.util.Date
 import java.util.Locale
 import android.media.MediaMetadataRetriever
 import io.github.jan.supabase.realtime.channel
-import io.github.jan.supabase.realtime.realtime
-import io.github.jan.supabase.realtime.RealtimeChannel
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import io.github.jan.supabase.realtime.postgresChangeFlow
+import io.github.jan.supabase.realtime.PostgresAction
+import io.github.jan.supabase.postgrest.query.filter.FilterOperator
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import java.util.TimeZone
+import java.util.Calendar
+import com.bumptech.glide.Glide
 
 class ChatRoomActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityChatRoomBinding
     private lateinit var adapter: MessageAdapter
     private val messages = mutableListOf<Message>()
-    private val httpClient = OkHttpClient()
 
-    // audio helpers
+    private val httpClient = OkHttpClient.Builder()
+        .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+        .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
+
     private lateinit var recorderHelper: AudioRecorderHelper
     private lateinit var playerHelper: AudioPlayerHelper
     private var currentAudioFile: File? = null
 
-    // intent extras
     private var roomId: String = ""
     private var currentUserId: String = ""
     private var otherUserId: String = ""
     private var otherUserName: String = ""
+    private var otherUserPhoto: String? = null
 
-    // replace with your base server if not set in BuildConfig
     private val baseUrl: String = if (BuildConfig.BASE_URL.endsWith("/")) BuildConfig.BASE_URL else BuildConfig.BASE_URL + "/"
 
-    // permission launcher for picking video/image
     private val pickMediaLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         uri?.let {
-            // handle picked media upload
             uploadMediaFromUri(it)
         }
     }
+
+    fun getPlayerHelper(): AudioPlayerHelper = playerHelper
+
+    private var realtimeChannel: io.github.jan.supabase.realtime.RealtimeChannel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityChatRoomBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // read extras
         roomId = intent.getStringExtra("room_id") ?: ""
         currentUserId = intent.getStringExtra("user_id_first") ?: ""
         otherUserId = intent.getStringExtra("user_id_second") ?: ""
         otherUserName = intent.getStringExtra("other_user_name") ?: "Chat"
+        otherUserPhoto = intent.getStringExtra("other_user_photo")
 
-        // toolbar title (ensure toolbar exists in layout)
-        binding.toolbar.title = otherUserName
-
+        setupToolbar()
         recorderHelper = AudioRecorderHelper(this)
-        playerHelper = AudioPlayerHelper(this)
+        playerHelper = AudioPlayerHelper()
 
         setupRecycler()
         setupInput()
         loadMessages()
-//      initRealtimeSubscribe()
+        initRealtimeSubscribe()
+    }
+
+    private fun setupToolbar() {
+        binding.tvChatName.text = otherUserName
+
+        // Load profile picture
+        Glide.with(this)
+            .load(otherUserPhoto)
+            .placeholder(R.drawable.ic_person_placeholder)
+            .error(R.drawable.ic_person_placeholder)
+            .into(binding.ivProfilePicture)
+
+        // Back button click
+        binding.btnBack.setOnClickListener {
+            finish()
+        }
     }
 
     private fun setupRecycler() {
         adapter = MessageAdapter(currentUserId, onPlayVoice = { msg, _view ->
             msg.mediaUrl?.let { url ->
-                // play from URL; you can add caching logic to play local file if available
-                playerHelper.playFromUrl(url)
+                playerHelper.play(url) {
+                    android.util.Log.d("AudioPlayer", "Playback finished for: ${msg.messageId}")
+                }
             }
         }, onTranscribe = { msg ->
             callTranscribe(msg.messageId, msg.mediaUrl ?: "")
@@ -107,6 +130,8 @@ class ChatRoomActivity : AppCompatActivity() {
         val lm = LinearLayoutManager(this)
         lm.stackFromEnd = true
         binding.recyclerMessages.layoutManager = lm
+
+        binding.recyclerMessages.addItemDecoration(StickyDateHeaderDecoration())
     }
 
     private fun setupInput() {
@@ -115,7 +140,6 @@ class ChatRoomActivity : AppCompatActivity() {
         val btnVideo = binding.btnSendVideo
         val btnSend = binding.btnSend
 
-        // toggle send button visibility based on text (uses extension from androidx.core.widget)
         et.addTextChangedListener { s ->
             val hasContent = !s.isNullOrBlank() && s.toString().trim().isNotEmpty()
             btnSend.visibility = if (hasContent) View.VISIBLE else View.GONE
@@ -123,7 +147,6 @@ class ChatRoomActivity : AppCompatActivity() {
             btnVideo.visibility = if (hasContent) View.GONE else View.VISIBLE
         }
 
-        // send text on click
         btnSend.setOnClickListener {
             val text = et.text.toString().trim()
             if (text.isNotEmpty()) {
@@ -132,25 +155,20 @@ class ChatRoomActivity : AppCompatActivity() {
             }
         }
 
-        // mic behaviour - record on toggle
         btnMic.setOnClickListener {
-            // request mic permission
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 111)
                 return@setOnClickListener
             }
 
             if (btnMic.tag == "recording") {
-                // stop recording
                 currentAudioFile = recorderHelper.stopRecording()
                 btnMic.tag = "idle"
                 btnMic.setImageResource(R.drawable.ic_mic)
-                // upload recorded file (duration extraction can be added)
                 currentAudioFile?.let { file ->
                     uploadVoiceNote(file)
                 }
             } else {
-                // start recording
                 recorderHelper.startRecording()
                 btnMic.tag = "recording"
                 btnMic.setImageResource(R.drawable.ic_stop)
@@ -158,11 +176,9 @@ class ChatRoomActivity : AppCompatActivity() {
         }
 
         btnVideo.setOnClickListener {
-            // open picker for video
             pickMediaLauncher.launch("video/*")
         }
 
-        // keyboard send
         et.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEND) {
                 val text = et.text.toString().trim()
@@ -176,7 +192,6 @@ class ChatRoomActivity : AppCompatActivity() {
     }
 
     private fun loadMessages() {
-        // call GET /chattingapp/getmessages?room_id=...&viewer=...
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val url = "${baseUrl}getmessages?room_id=$roomId&viewer=$currentUserId"
@@ -203,6 +218,7 @@ class ChatRoomActivity : AppCompatActivity() {
                                     }
                                 }
 
+                                val sentAtRaw = o.optString("sent_at")
                                 val message = Message(
                                     messageId = o.optString("message_id"),
                                     roomId = o.optString("room_id"),
@@ -214,7 +230,8 @@ class ChatRoomActivity : AppCompatActivity() {
                                         ?.takeIf { it.isNotBlank() && !it.equals("null", true) },
                                     durationSec = if (o.has("duration_sec")) o.optInt("duration_sec") else null,
                                     transcriptText = transcript,
-                                    sentAt = formatTime(o.optString("sent_at"))
+                                    sentAt = formatTimeOnly(sentAtRaw), // HH:mm only
+                                    sentAtRaw = sentAtRaw
                                 )
                                 list.add(message)
                             }
@@ -223,8 +240,16 @@ class ChatRoomActivity : AppCompatActivity() {
                         withContext(Dispatchers.Main) {
                             messages.clear()
                             messages.addAll(list)
-                            adapter.submitList(messages.toList())
-                            if (adapter.itemCount > 0) binding.recyclerMessages.scrollToPosition(adapter.itemCount - 1)
+
+                            // Group messages by date and create ChatItems
+                            val chatItems = groupMessagesByDate(list)
+                            adapter.submitList(chatItems) {
+                                if (adapter.itemCount > 0) {
+                                    binding.recyclerMessages.post {
+                                        binding.recyclerMessages.scrollToPosition(adapter.itemCount - 1)
+                                    }
+                                }
+                            }
                         }
                     }
                 } finally {
@@ -233,112 +258,6 @@ class ChatRoomActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }
-    }
-
-//    private var realtimeChannel: RealtimeChannel? = null
-//
-//    private fun initRealtimeSubscribe() {
-//        lifecycleScope.launch(Dispatchers.IO) {
-//            try {
-//                val supabase = SupabaseClient.client
-//                realtimeChannel = supabase.realtime.createChannel("messages:$roomId")
-//
-//                realtimeChannel?.postgresChangeFlow<kotlinx.serialization.json.JsonObject>("public") {
-//                    table = "messages"
-//                    filter = "room_id=eq.$roomId"
-//                }?.collect { change ->
-//                    when (change) {
-//                        is io.github.jan.supabase.realtime.PostgresAction.Insert -> {
-//                            val record = change.record
-//                            val messageId = record["message_id"]?.jsonPrimitive?.content ?: ""
-//                            if (messageId.isNotEmpty()) {
-//                                fetchAndAppendNewMessage(messageId)
-//                            }
-//                        }
-//                        else -> {}
-//                    }
-//                }
-//
-//                realtimeChannel?.postgresChangeFlow<kotlinx.serialization.json.JsonObject>("public") {
-//                    table = "voice_notes"
-//                }?.collect { change ->
-//                    when (change) {
-//                        is io.github.jan.supabase.realtime.PostgresAction.Update -> {
-//                            val record = change.record
-//                            val messageId = record["message_id"]?.jsonPrimitive?.content ?: ""
-//                            val transcript = record["transcript_text"]?.jsonPrimitive?.content
-//
-//                            withContext(Dispatchers.Main) {
-//                                val idx = messages.indexOfFirst { it.messageId == messageId }
-//                                if (idx >= 0 && transcript != null) {
-//                                    messages[idx] = messages[idx].copy(transcriptText = transcript)
-//                                    adapter.submitList(messages.toList())
-//                                    adapter.notifyItemChanged(idx)
-//                                }
-//                            }
-//                        }
-//                        else -> {}
-//                    }
-//                }
-//
-//                realtimeChannel?.subscribe()
-//            } catch (e: Exception) {
-//                e.printStackTrace()
-//            }
-//        }
-//    }
-
-    private suspend fun fetchAndAppendNewMessage(messageId: String) {
-        try {
-            val url = "${baseUrl}getmessages?room_id=$roomId&viewer=$currentUserId"
-            val request = Request.Builder().url(url).get().build()
-            val resp = httpClient.newCall(request).execute()
-            val body = resp.body?.string() ?: ""
-            resp.close()
-
-            val json = JSONObject(body)
-            if (json.optString("status") == "success") {
-                val arr = json.optJSONObject("data")?.optJSONArray("messages")
-                if (arr != null) {
-                    for (i in 0 until arr.length()) {
-                        val o = arr.getJSONObject(i)
-                        if (o.optString("message_id") == messageId) {
-                            val rawTranscript = o.opt("transcript_text")
-                            val transcript: String? = when (rawTranscript) {
-                                null, JSONObject.NULL -> null
-                                else -> {
-                                    val s = rawTranscript.toString().trim()
-                                    if (s.isEmpty() || s.equals("null", true)) null else s
-                                }
-                            }
-
-                            val newMsg = Message(
-                                messageId = o.optString("message_id"),
-                                roomId = o.optString("room_id"),
-                                senderId = o.optString("sender_id"),
-                                messageType = o.optString("message_type", "text"),
-                                content = o.optString("content", null)
-                                    ?.takeIf { it.isNotBlank() && !it.equals("null", true) },
-                                mediaUrl = o.optString("media_url", null)
-                                    ?.takeIf { it.isNotBlank() && !it.equals("null", true) },
-                                durationSec = if (o.has("duration_sec")) o.optInt("duration_sec") else null,
-                                transcriptText = transcript,
-                                sentAt = formatTime(o.optString("sent_at"))
-                            )
-
-                            withContext(Dispatchers.Main) {
-                                messages.add(newMsg)
-                                adapter.submitList(messages.toList())
-                                binding.recyclerMessages.scrollToPosition(adapter.itemCount - 1)
-                            }
-                            break
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 
@@ -358,8 +277,6 @@ class ChatRoomActivity : AppCompatActivity() {
                 val resp = httpClient.newCall(req).execute()
                 try {
                     val respStr = resp.body?.string()
-                    // Optionally append locally while waiting for realtime event,
-                    // but we rely on realtime update to keep server as source-of-truth.
                 } finally {
                     resp.close()
                 }
@@ -390,7 +307,6 @@ class ChatRoomActivity : AppCompatActivity() {
                 val resp = httpClient.newCall(req).execute()
                 try {
                     val respStr = resp.body?.string() ?: ""
-                    // parse server response if needed; rely on realtime to update UI
                 } finally {
                     resp.close()
                 }
@@ -401,8 +317,6 @@ class ChatRoomActivity : AppCompatActivity() {
     }
 
     private fun uploadMediaFromUri(uri: Uri) {
-        // convert uri to file or stream and upload to appropriate endpoint (media/messages)
-        // This is placeholder. You'll need to copy URI to a temp file, detect mime type and upload as multipart.
         runOnUiThread {
             Toast.makeText(this, "Uploading media...", Toast.LENGTH_SHORT).show()
         }
@@ -416,57 +330,381 @@ class ChatRoomActivity : AppCompatActivity() {
                 json.put("media_url", mediaUrl)
                 val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
                 val req = Request.Builder().url("${baseUrl}voicenote/transcribe").post(body).build()
-                val resp = httpClient.newCall(req).execute()
+
+                httpClient.newCall(req).enqueue(object : okhttp3.Callback {
+                    override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
+                        android.util.Log.e("Transcribe", "❌ Failed: ${e.message}")
+                        lifecycleScope.launch(Dispatchers.Main) {
+                            Toast.makeText(
+                                this@ChatRoomActivity,
+                                "Gagal: ${e.message}",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+
+                    override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                        response.use {
+                            android.util.Log.d("Transcribe", "✅ Success")
+                            lifecycleScope.launch(Dispatchers.Main) {
+                                Toast.makeText(
+                                    this@ChatRoomActivity,
+                                    "Transkripsi selesai! Tunggu update...",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
+                })
+
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@ChatRoomActivity,
+                        "Memproses transkripsi...",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("Transcribe", "❌ Error: ${e.message}", e)
+            }
+        }
+    }
+
+    // Format time to show only HH:mm
+    private fun formatTimeOnly(ts: String): String {
+        if (ts.isBlank()) return ""
+        return try {
+            if (ts.contains("T") && (ts.contains("+") || ts.contains("Z"))) {
+                val cleaned = ts.replace(Regex("\\.\\d{3}\\d+")) { match ->
+                    match.value.substring(0, 4)
+                }
+
+                val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US)
+                sdf.timeZone = TimeZone.getTimeZone("UTC")
+                val date = sdf.parse(cleaned) ?: Date()
+
+                val output = SimpleDateFormat("HH:mm", Locale("id", "ID"))
+                output.timeZone = TimeZone.getTimeZone("Asia/Jakarta")
+                return output.format(date)
+            }
+
+            if (ts.contains(",") && ts.contains("GMT")) {
+                val sdf = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US)
+                sdf.timeZone = TimeZone.getTimeZone("GMT")
+                val date = sdf.parse(ts) ?: Date()
+
+                val output = SimpleDateFormat("HH:mm", Locale("id", "ID"))
+                output.timeZone = TimeZone.getTimeZone("Asia/Jakarta")
+                return output.format(date)
+            }
+
+            ts
+        } catch (e: Exception) {
+            android.util.Log.e("TimeFormat", "Error: ${e.message}", e)
+            ts
+        }
+    }
+
+    // Format date for header (e.g., "Monday, 08 Dec 2025")
+    private fun formatDateHeader(ts: String): String {
+        if (ts.isBlank()) return ""
+        return try {
+            if (ts.contains("T") && (ts.contains("+") || ts.contains("Z"))) {
+                val cleaned = ts.replace(Regex("\\.\\d{3}\\d+")) { match ->
+                    match.value.substring(0, 4)
+                }
+
+                val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US)
+                sdf.timeZone = TimeZone.getTimeZone("UTC")
+                val date = sdf.parse(cleaned) ?: Date()
+
+                val output = SimpleDateFormat("EEEE, dd MMM yyyy", Locale("id", "ID"))
+                output.timeZone = TimeZone.getTimeZone("Asia/Jakarta")
+
+                // Check if date is today, yesterday, etc.
+                val calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Jakarta"))
+                calendar.time = date
+
+                val today = Calendar.getInstance(TimeZone.getTimeZone("Asia/Jakarta"))
+                val yesterday = Calendar.getInstance(TimeZone.getTimeZone("Asia/Jakarta"))
+                yesterday.add(Calendar.DAY_OF_YEAR, -1)
+
+                return when {
+                    isSameDay(calendar, today) -> "Hari Ini"
+                    isSameDay(calendar, yesterday) -> "Kemarin"
+                    else -> output.format(date)
+                }
+            }
+
+            if (ts.contains(",") && ts.contains("GMT")) {
+                val sdf = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US)
+                sdf.timeZone = TimeZone.getTimeZone("GMT")
+                val date = sdf.parse(ts) ?: Date()
+
+                val output = SimpleDateFormat("EEEE, dd MMM yyyy", Locale("id", "ID"))
+                output.timeZone = TimeZone.getTimeZone("Asia/Jakarta")
+
+                val calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Jakarta"))
+                calendar.time = date
+
+                val today = Calendar.getInstance(TimeZone.getTimeZone("Asia/Jakarta"))
+                val yesterday = Calendar.getInstance(TimeZone.getTimeZone("Asia/Jakarta"))
+                yesterday.add(Calendar.DAY_OF_YEAR, -1)
+
+                return when {
+                    isSameDay(calendar, today) -> "Hari Ini"
+                    isSameDay(calendar, yesterday) -> "Kemarin"
+                    else -> output.format(date)
+                }
+            }
+
+            ts
+        } catch (e: Exception) {
+            android.util.Log.e("TimeFormat", "Error: ${e.message}", e)
+            ts
+        }
+    }
+
+    private fun isSameDay(cal1: Calendar, cal2: Calendar): Boolean {
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+    }
+
+    // Group messages by date and insert date headers
+    private fun groupMessagesByDate(messages: List<Message>): List<ChatItem> {
+        val chatItems = mutableListOf<ChatItem>()
+        var lastDate: String? = null
+
+        for (message in messages) {
+            val dateHeader = formatDateHeader(message.sentAtRaw)
+
+            if (dateHeader != lastDate) {
+                chatItems.add(ChatItem.DateHeader(dateHeader))
+                lastDate = dateHeader
+            }
+
+            chatItems.add(ChatItem.MessageItem(message))
+        }
+
+        return chatItems
+    }
+
+    private fun initRealtimeSubscribe() {
+        val supabase = SupabaseClient.getClient(this)
+
+        lifecycleScope.launch {
+            try {
+                android.util.Log.d("ChatRealtime", "=== STARTING REALTIME SUBSCRIPTION ===")
+                android.util.Log.d("ChatRealtime", "Room ID: $roomId")
+                android.util.Log.d("ChatRealtime", "Current User: $currentUserId")
+
+                realtimeChannel = supabase.channel("messages-room-$roomId")
+
+                val changeFlow = realtimeChannel!!.postgresChangeFlow<PostgresAction>(schema = "public") {
+                    table = "messages"
+                    filter("room_id", FilterOperator.EQ, roomId)
+                }
+
+                changeFlow.onEach { action ->
+                    android.util.Log.d("ChatRealtime", "🔥 RECEIVED ACTION: ${action.javaClass.simpleName}")
+
+                    when (action) {
+                        is PostgresAction.Insert -> {
+                            val newRecord = action.record as? Map<*, *>
+                            android.util.Log.d("ChatRealtime", "📩 INSERT Record: $newRecord")
+                            val msgId = newRecord?.get("message_id")?.toString()?.trim('"')
+                            android.util.Log.d("ChatRealtime", "Message ID: $msgId")
+
+                            if (msgId != null) {
+                                android.util.Log.d("ChatRealtime", "🚀 Launching fetch for: $msgId")
+                                lifecycleScope.launch(Dispatchers.IO) {
+                                    android.util.Log.d("ChatRealtime", "🔥 Inside coroutine, calling fetch...")
+                                    fetchAndAppendNewMessage(msgId)
+                                }
+                            }
+                        }
+                        is PostgresAction.Update -> {
+                            val updatedRecord = action.record as? Map<*, *>
+                            android.util.Log.d("ChatRealtime", "🔄 UPDATE Record: $updatedRecord")
+                            val msgId = updatedRecord?.get("message_id")?.toString()?.trim('"')
+                            if (msgId != null) {
+                                android.util.Log.d("ChatRealtime", "🚀 Launching update for: $msgId")
+                                launch(Dispatchers.IO) {
+                                    updateMessageInList(msgId)
+                                }
+                            }
+                        }
+                        is PostgresAction.Delete -> {
+                            val oldRecord = action.oldRecord as? Map<*, *>
+                            android.util.Log.d("ChatRealtime", "🗑️ DELETE Record: $oldRecord")
+                            val msgId = oldRecord?.get("message_id")?.toString()?.trim('"')
+                            if (msgId != null) {
+                                removeMessageFromList(msgId)
+                            }
+                        }
+                        else -> {
+                            android.util.Log.d("ChatRealtime", "❓ Unknown action: $action")
+                        }
+                    }
+                }.launchIn(lifecycleScope)
+
+                realtimeChannel!!.subscribe()
+                android.util.Log.d("ChatRealtime", "✅ Successfully subscribed to channel")
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                android.util.Log.e("ChatRealtime", "❌ Subscription error: ${e.message}", e)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@ChatRoomActivity, "Realtime error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private suspend fun fetchAndAppendNewMessage(messageId: String, isUpdate: Boolean = false) {
+        android.util.Log.d("ChatRealtime", "🎯 Fetching single message: $messageId")
+
+        withContext(Dispatchers.IO) {
+            try {
+                val url = "${baseUrl}getmessage/$messageId?viewer=$currentUserId"
+                val request = Request.Builder().url(url).get().build()
+                val resp = httpClient.newCall(request).execute()
+
                 try {
-                    val respStr = resp.body?.string() ?: ""
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@ChatRoomActivity, "Transcribe result: $respStr", Toast.LENGTH_LONG).show()
+                    val body = resp.body?.string() ?: ""
+                    android.util.Log.d("ChatRealtime", "📥 Response: ${body.take(200)}")
+
+                    val json = JSONObject(body)
+                    if (json.optString("status") == "success") {
+                        val msgObj = json.optJSONObject("data")?.optJSONObject("message")
+
+                        if (msgObj != null) {
+                            val rawTranscript = msgObj.opt("transcript_text")
+                            val transcript: String? = when (rawTranscript) {
+                                null, JSONObject.NULL -> null
+                                else -> {
+                                    val s = rawTranscript.toString().trim()
+                                    if (s.isEmpty() || s.equals("null", ignoreCase = true)) null else s
+                                }
+                            }
+
+                            val sentAtRaw = msgObj.optString("sent_at")
+                            val newMsg = Message(
+                                messageId = msgObj.optString("message_id"),
+                                roomId = msgObj.optString("room_id"),
+                                senderId = msgObj.optString("sender_id"),
+                                messageType = msgObj.optString("message_type", "text"),
+                                content = msgObj.optString("content", null)
+                                    ?.takeIf { it.isNotBlank() && !it.equals("null", true) },
+                                mediaUrl = msgObj.optString("media_url", null)
+                                    ?.takeIf { it.isNotBlank() && !it.equals("null", true) },
+                                durationSec = if (msgObj.has("duration_sec")) msgObj.optInt("duration_sec") else null,
+                                transcriptText = transcript,
+                                sentAt = formatTimeOnly(sentAtRaw),
+                                sentAtRaw = sentAtRaw
+                            )
+
+                            android.util.Log.d("ChatRealtime", "✅ Message parsed: ${newMsg.messageId}")
+
+                            withContext(Dispatchers.Main) {
+                                handleMessageUpdate(newMsg, isUpdate)
+                            }
+                        } else {
+                            android.util.Log.e("ChatRealtime", "❌ No message object in response")
+                        }
+                    } else {
+                        val errorMsg = json.optString("message", "Unknown error")
+                        android.util.Log.e("ChatRealtime", "❌ API Error: $errorMsg")
                     }
                 } finally {
                     resp.close()
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                android.util.Log.e("ChatRealtime", "❌ Error fetching message: ${e.message}", e)
             }
         }
     }
 
-    private fun formatTime(ts: String): String {
-        // Target: dd/MM/yy HH:mm (WIB)
-        val targetPattern = "dd/MM/yy HH:mm"
-        val wibZone = java.util.TimeZone.getTimeZone("Asia/Jakarta")
+    private fun handleMessageUpdate(newMsg: Message, isUpdate: Boolean) {
+        android.util.Log.d("ChatRealtime", "🔄 Handling message: ${newMsg.messageId}, isUpdate=$isUpdate")
 
-        return try {
-            // Try parse ISO with offset (2025-11-24T15:31:12.123456+00:00)
-            val cleaned = ts.trim().replace(Regex("\\.\\d+"), "") // strip fractional seconds
-            val sdfIn = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
-            sdfIn.timeZone = java.util.TimeZone.getTimeZone("UTC")
-            val date = sdfIn.parse(cleaned) ?: Date()
+        if (isUpdate) {
+            val index = messages.indexOfFirst {
+                it.messageId.equals(newMsg.messageId, ignoreCase = true)
+            }
 
-            val sdfOut = SimpleDateFormat(targetPattern, Locale("id", "ID"))
-            sdfOut.timeZone = wibZone
-            sdfOut.format(date)
-        } catch (e1: Exception) {
-            try {
-                // Fallback: parse Z format (2025-11-24T15:31:12Z)
-                val sdfIn2 = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
-                sdfIn2.timeZone = java.util.TimeZone.getTimeZone("UTC")
-                val date2 = sdfIn2.parse(ts) ?: Date()
+            if (index != -1) {
+                android.util.Log.d("ChatRealtime", "📝 Updating message at index $index")
 
-                val sdfOut2 = SimpleDateFormat(targetPattern, Locale("id", "ID"))
-                sdfOut2.timeZone = wibZone
-                sdfOut2.format(date2)
-            } catch (e2: Exception) {
-                ts // last resort
+                newMsg.isTranscribing = false
+                messages[index] = newMsg
+
+                // Regroup and submit
+                val chatItems = groupMessagesByDate(messages)
+                adapter.submitList(chatItems)
+
+                android.util.Log.d("ChatRealtime", "✅ Transcript updated for message at $index")
+            } else {
+                android.util.Log.w("ChatRealtime", "⚠️ Message not found for update: ${newMsg.messageId}")
+            }
+        } else {
+            val existingIndex = messages.indexOfFirst {
+                it.messageId.equals(newMsg.messageId, ignoreCase = true)
+            }
+
+            if (existingIndex != -1) {
+                android.util.Log.d("ChatRealtime", "⚠️ Duplicate message ignored: ${newMsg.messageId}")
+                return
+            }
+
+            messages.add(newMsg)
+            android.util.Log.d("ChatRealtime", "➕ New message added. Total: ${messages.size}")
+
+            // Regroup and submit
+            val chatItems = groupMessagesByDate(messages)
+            adapter.submitList(chatItems) {
+                binding.recyclerMessages.post {
+                    binding.recyclerMessages.scrollToPosition(adapter.itemCount - 1)
+                }
+            }
+        }
+    }
+
+    private suspend fun updateMessageInList(messageId: String) {
+        fetchAndAppendNewMessage(messageId, isUpdate = true)
+    }
+
+    private fun removeMessageFromList(messageId: String) {
+        lifecycleScope.launch(Dispatchers.Main) {
+            val index = messages.indexOfFirst { it.messageId == messageId }
+            if (index != -1) {
+                messages.removeAt(index)
+
+                // Regroup and submit
+                val chatItems = groupMessagesByDate(messages)
+                adapter.submitList(chatItems)
+                android.util.Log.d("ChatRealtime", "🗑️ Message removed at index $index")
             }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        playerHelper.release()
-//        lifecycleScope.launch {
-//            realtimeChannel?.unsubscribe()
-//        }
+
+        try {
+            playerHelper.release()
+            android.util.Log.d("ChatRoom", "AudioPlayer released")
+        } catch (e: Exception) {
+            android.util.Log.e("ChatRoom", "Error releasing AudioPlayer: ${e.message}", e)
+        }
+
+        try {
+            lifecycleScope.launch {
+                realtimeChannel?.unsubscribe()
+                android.util.Log.d("ChatRealtime", "Channel unsubscribed")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("ChatRealtime", "Error unsubscribing: ${e.message}", e)
+        }
     }
 }

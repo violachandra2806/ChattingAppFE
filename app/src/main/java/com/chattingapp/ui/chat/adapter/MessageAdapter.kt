@@ -7,12 +7,17 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.chattingapp.R
+import com.chattingapp.ui.chat.ChatItem
 import com.chattingapp.ui.chat.Message
+import com.chattingapp.ui.chat.WaveformView
+import com.chattingapp.ui.chat.ChatRoomActivity
 import com.bumptech.glide.Glide
 
+private const val TYPE_DATE_HEADER = 0
 private const val TYPE_TEXT_IN = 1
 private const val TYPE_TEXT_OUT = 2
 private const val TYPE_VOICE_IN = 3
@@ -24,20 +29,27 @@ class MessageAdapter(
     private val currentUserId: String,
     private val onPlayVoice: (Message, View) -> Unit,
     private val onTranscribe: (Message) -> Unit
-) : ListAdapter<Message, RecyclerView.ViewHolder>(MessageDiffCallback()) {
+) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItemDiffCallback()) {
+
     override fun getItemViewType(position: Int): Int {
-        val m = getItem(position)
-        val out = m.senderId == currentUserId
-        return when (m.messageType) {
-            "voice" -> if (out) TYPE_VOICE_OUT else TYPE_VOICE_IN
-            "video" -> if (out) TYPE_VIDEO_OUT else TYPE_VIDEO_IN
-            else -> if (out) TYPE_TEXT_OUT else TYPE_TEXT_IN
+        return when (val item = getItem(position)) {
+            is ChatItem.DateHeader -> TYPE_DATE_HEADER
+            is ChatItem.MessageItem -> {
+                val m = item.message
+                val out = m.senderId == currentUserId
+                when (m.messageType) {
+                    "voice" -> if (out) TYPE_VOICE_OUT else TYPE_VOICE_IN
+                    "video" -> if (out) TYPE_VIDEO_OUT else TYPE_VIDEO_IN
+                    else -> if (out) TYPE_TEXT_OUT else TYPE_TEXT_IN
+                }
+            }
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
+            TYPE_DATE_HEADER -> DateHeaderViewHolder(inflater.inflate(R.layout.item_date_header, parent, false))
             TYPE_TEXT_IN -> TextViewHolder(inflater.inflate(R.layout.item_message_text_incoming, parent, false))
             TYPE_TEXT_OUT -> TextViewHolder(inflater.inflate(R.layout.item_message_text_outgoing, parent, false))
             TYPE_VOICE_IN -> VoiceViewHolder(inflater.inflate(R.layout.item_message_voice_incoming, parent, false))
@@ -49,11 +61,23 @@ class MessageAdapter(
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        val msg = getItem(position)
-        when (holder) {
-            is TextViewHolder -> holder.bind(msg)
-            is VoiceViewHolder -> holder.bind(msg)
-            is VideoViewHolder -> holder.bind(msg)
+        when (val item = getItem(position)) {
+            is ChatItem.DateHeader -> (holder as DateHeaderViewHolder).bind(item)
+            is ChatItem.MessageItem -> {
+                when (holder) {
+                    is TextViewHolder -> holder.bind(item.message)
+                    is VoiceViewHolder -> holder.bind(item.message)
+                    is VideoViewHolder -> holder.bind(item.message)
+                }
+            }
+        }
+    }
+
+    inner class DateHeaderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        private val tvDate: TextView = view.findViewById(R.id.tvDateHeader)
+
+        fun bind(header: ChatItem.DateHeader) {
+            tvDate.text = header.date
         }
     }
 
@@ -61,10 +85,9 @@ class MessageAdapter(
         private val tvContent: TextView = view.findViewById(R.id.tvMessageText)
         private val tvTime: TextView = view.findViewById(R.id.tvMessageTime)
 
-
         fun bind(message: Message) {
             tvContent.text = message.content ?: ""
-            tvTime.text = message.sentAt
+            tvTime.text = message.sentAt // Only show time (HH:mm)
         }
     }
 
@@ -74,23 +97,83 @@ class MessageAdapter(
         private val tvTranscript: TextView = v.findViewById(R.id.tvTranscript)
         private val tvAction: TextView = v.findViewById(R.id.tvTranscriptAction)
         private val tvTime: TextView? = v.findViewById(R.id.tvMessageTime)
+        private val waveformView: WaveformView? = v.findViewById(R.id.waveformView)
 
         fun bind(m: Message) {
-            tvDuration.text = m.durationSec?.let { String.format("%02d:%02d", it / 60, it % 60) } ?: ""
-            tvTime?.text = m.sentAt
+            val totalDuration = m.durationSec ?: 0
+            tvDuration.text = formatDuration(totalDuration)
+            tvTime?.text = m.sentAt // Only show time (HH:mm)
 
-            val hasTranscript = !m.transcriptText.isNullOrBlank() && !m.transcriptText.equals("null", true)
-            if (hasTranscript) {
-                tvTranscript.visibility = View.VISIBLE
-                tvTranscript.text = m.transcriptText
-                tvAction.visibility = View.GONE
+            val isIncoming = m.senderId != currentUserId
+            if (isIncoming) {
+                waveformView?.setWaveColor(ContextCompat.getColor(itemView.context, android.R.color.black))
             } else {
-                tvTranscript.visibility = View.GONE
-                tvAction.visibility = View.VISIBLE
-                tvAction.setOnClickListener { onTranscribe(m) }
+                waveformView?.setWaveColor(ContextCompat.getColor(itemView.context, android.R.color.white))
             }
 
-            btnPlay.setOnClickListener { onPlayVoice(m, it) }
+            val hasTranscript = !m.transcriptText.isNullOrBlank() && !m.transcriptText.equals("null", true)
+
+            when {
+                hasTranscript -> {
+                    tvTranscript.visibility = View.VISIBLE
+                    tvTranscript.text = m.transcriptText
+                    tvAction.visibility = View.GONE
+                }
+                m.isTranscribing -> {
+                    tvTranscript.visibility = View.GONE
+                    tvAction.visibility = View.VISIBLE
+                    tvAction.text = "Sedang proses..."
+                    tvAction.isEnabled = false
+                    tvAction.alpha = 0.5f
+                    tvAction.setOnClickListener(null)
+                }
+                else -> {
+                    tvTranscript.visibility = View.GONE
+                    tvAction.visibility = View.VISIBLE
+                    tvAction.text = "Transkrip"
+                    tvAction.isEnabled = true
+                    tvAction.alpha = 1.0f
+                    tvAction.setOnClickListener {
+                        m.isTranscribing = true
+                        notifyItemChanged(adapterPosition)
+                        onTranscribe(m)
+                    }
+                }
+            }
+
+            btnPlay.setOnClickListener {
+                m.mediaUrl?.let { url ->
+                    val playerHelper = (itemView.context as? ChatRoomActivity)?.getPlayerHelper()
+
+                    if (playerHelper?.isPlaying(url) == true) {
+                        playerHelper.stop()
+                        btnPlay.setImageResource(R.drawable.ic_play)
+                        waveformView?.stopAnimation()
+                        tvDuration.text = formatDuration(totalDuration)
+                    } else {
+                        btnPlay.setImageResource(R.drawable.ic_pause)
+                        waveformView?.startAnimation()
+
+                        playerHelper?.play(
+                            url = url,
+                            onProgress = { progress, currentMs, _ ->
+                                val currentSec = currentMs / 1000
+                                tvDuration.text = formatDuration(currentSec)
+                                waveformView?.updateProgress(progress)
+                            },
+                            onComplete = {
+                                btnPlay.setImageResource(R.drawable.ic_play)
+                                waveformView?.stopAnimation()
+                                tvDuration.text = formatDuration(totalDuration)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        private fun formatDuration(seconds: Int): String {
+            return String.format("%02d:%02d", seconds / 60, seconds % 60)
         }
     }
 
@@ -107,7 +190,7 @@ class MessageAdapter(
                 .into(ivThumbnail)
 
             tvDuration.text = message.durationSec?.let { String.format("%02d:%02d", it / 60, it % 60) } ?: ""
-            tvTime?.text = message.sentAt
+            tvTime?.text = message.sentAt // Only show time (HH:mm)
             btnPlay?.setOnClickListener {
                 // handle play video
             }

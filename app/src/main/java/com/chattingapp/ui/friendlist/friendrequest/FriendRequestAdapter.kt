@@ -15,7 +15,6 @@ class FriendRequestAdapter(
 ) : RecyclerView.Adapter<FriendRequestAdapter.RequestViewHolder>() {
 
     inner class RequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val avatar: TextView = itemView.findViewById(R.id.avatar)
         val username: TextView = itemView.findViewById(R.id.username)
         val btnAccept: ImageView = itemView.findViewById(R.id.btnAccept)
         val btnReject: ImageView = itemView.findViewById(R.id.btnReject)
@@ -29,8 +28,6 @@ class FriendRequestAdapter(
 
     override fun onBindViewHolder(holder: RequestViewHolder, position: Int) {
         val request = requests[position]
-        holder.avatar.text = request.initials
-        holder.avatar.background.setTint(request.color)
         holder.username.text = "@${request.username}"
 
         holder.btnAccept.setOnClickListener { onAccept(request) }
