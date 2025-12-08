@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     // Optional: only if you're using Compose
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -34,6 +35,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -42,6 +44,8 @@ android {
 
     buildFeatures {
         viewBinding = true
+        //noinspection DataBindingWithoutKapt
+        dataBinding = true
         // Enable Compose only if you’re using it
         compose = true
         buildConfig = true
@@ -111,6 +115,27 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
+    // Supabase Realtime
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.0.2"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:realtime-kt")
+    implementation("io.github.jan-tennert.supabase:storage-kt")
+
+    // Ktor (required by Supabase SDK)
+    implementation("io.ktor:ktor-client-android:3.0.1")
+    implementation("io.ktor:ktor-client-core:3.0.1")
+    implementation("io.ktor:ktor-client-cio:3.0.1")
+    implementation("io.ktor:ktor-client-websockets:3.0.1")
+    implementation("io.ktor:ktor-utils:3.0.1")
+
+    // Kotlin Serialization (already added)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+
+    // Waveform
+    implementation("com.github.lincollincol:amplituda:2.2.2")
+
+    // Format Time
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
     // Realtime setup
     implementation ("io.github.jan-tennert.supabase:realtime-kt:2.0.0")
     implementation ("io.github.jan-tennert.supabase:postgrest-kt:2.0.0")
