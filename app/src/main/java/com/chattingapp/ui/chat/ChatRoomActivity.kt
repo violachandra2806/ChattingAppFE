@@ -79,12 +79,6 @@ class ChatRoomActivity : AppCompatActivity() {
     // replace with your base server if not set in BuildConfig
     private val baseUrl: String = if (BuildConfig.BASE_URL.endsWith("/")) BuildConfig.BASE_URL else BuildConfig.BASE_URL + "/"
 
-    private val pickMediaLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let {
-            uploadMediaFromUri(it)
-        }
-    }
-
     fun getPlayerHelper(): AudioPlayerHelper = playerHelper
 
     private var realtimeChannel: io.github.jan.supabase.realtime.RealtimeChannel? = null
@@ -108,6 +102,22 @@ class ChatRoomActivity : AppCompatActivity() {
         setupInput()
         loadMessages()
         initRealtimeSubscribe()
+
+        binding.etMessage.setOnLongClickListener {
+            android.util.Log.d("VideoPlayer", "Test: Long press on message input")
+            // Test VideoPlayerActivity with a simple video
+            val testIntent = Intent(this, VideoPlayerActivity::class.java).apply {
+                putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
+                putExtra(VideoPlayerActivity.EXTRA_MESSAGE_ID, "test123")
+                putExtra(VideoPlayerActivity.EXTRA_ROOM_ID, roomId)
+                putExtra(VideoPlayerActivity.EXTRA_TRANSLATE_YN, "N")
+                putExtra(VideoPlayerActivity.EXTRA_FRAME_RATE, 30)
+                putExtra(VideoPlayerActivity.EXTRA_RESOLUTION, "1280x720")
+                putExtra(VideoPlayerActivity.EXTRA_DURATION, 10000)
+            }
+            startActivity(testIntent)
+            true
+        }
     }
 
     private fun setupToolbar() {
@@ -187,7 +197,6 @@ class ChatRoomActivity : AppCompatActivity() {
         }
 
         btnVideo.setOnClickListener {
-            pickMediaLauncher.launch("video/*")
             showVideoSourceDialog()
         }
 
@@ -282,6 +291,7 @@ class ChatRoomActivity : AppCompatActivity() {
     private fun pickVideoFromGallery() {
         val intent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
         intent.type = "video/*"
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("video/mp4", "video/3gp", "video/avi", "video/webm"))
         startActivityForResult(intent, REQUEST_CODE_VIDEO_PICK)
     }
 
@@ -326,16 +336,22 @@ class ChatRoomActivity : AppCompatActivity() {
                                     transcriptText = transcript,
                                     sentAt = formatTimeOnly(sentAtRaw),
                                     sentAtRaw = sentAtRaw,
-                                    // Add these lines for video metadata
-                                    translateYN = o.optString("translate_yn", null)
-                                        ?.takeIf { it.isNotBlank() && !it.equals("null", true) },
-                                    frameRate = if (o.has("frame_rate")) o.optInt("frame_rate") else null,
-                                    resolution = o.optString("resolution", null)
-                                        ?.takeIf { it.isNotBlank() && !it.equals("null", true) }
+                                    // Add these lines for video metadata - FIXED VERSION
+                                    translateYN = o.optString("translate_yn", null).let { str ->
+                                        if (str.isNullOrBlank() || str.equals("null", true)) null else str
+                                    },
+                                    frameRate = try {
+                                        if (o.has("frame_rate")) o.optInt("frame_rate") else null
+                                    } catch (e: Exception) {
+                                        null
+                                    },
+                                    resolution = o.optString("resolution", null).let { str ->
+                                        if (str.isNullOrBlank() || str.equals("null", true)) null else str
+                                    }
                                 )
 
                                 if (message.messageType == "video") {
-                                    android.util.Log.d("ChatRoom", "Video message parsed: id=${message.messageId}, translateYN=${message.translateYN}, frameRate=${message.frameRate}, resolution=${message.resolution}")
+                                    android.util.Log.d("ChatRoom", "Video message parsed: id=${message.messageId}, translateYN=${message.translateYN}, frameRate=${message.frameRate}, resolution=${message.resolution}, durationSec=${message.durationSec}, mediaUrl=${message.mediaUrl}")
                                 }
                                 list.add(message)
                             }

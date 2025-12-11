@@ -81,9 +81,16 @@ class CameraActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            if (allPermissionsGranted()) startCamera()
-            else {
-                Toast.makeText(this, "Permission denied.", Toast.LENGTH_SHORT).show()
+            if (allPermissionsGranted()) {
+                startCamera()
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                    == PackageManager.PERMISSION_GRANTED) {
+                    Log.d("AUDIO", "Audio permission granted")
+                } else {
+                    Toast.makeText(this, "Audio permission required for recording", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                Toast.makeText(this, "Permissions not granted by user.", Toast.LENGTH_SHORT).show()
                 finish()
             }
         }
@@ -108,7 +115,14 @@ class CameraActivity : AppCompatActivity() {
             else CameraSelector.DEFAULT_BACK_CAMERA
 
             provider.unbindAll()
-            provider.bindToLifecycle(this, selector, preview, videoCapture)
+
+            try {
+                provider.bindToLifecycle(this, selector, preview, videoCapture)
+            } catch (e: Exception) {
+                Log.e("CAMERA", "Failed to bind camera: ${e.message}")
+                Toast.makeText(this, "Failed to start camera", Toast.LENGTH_SHORT).show()
+                finish()
+            }
 
         }, ContextCompat.getMainExecutor(this))
     }
@@ -166,7 +180,12 @@ class CameraActivity : AppCompatActivity() {
                 if (ContextCompat.checkSelfPermission(
                         this@CameraActivity, Manifest.permission.RECORD_AUDIO
                     ) == PackageManager.PERMISSION_GRANTED
-                ) withAudioEnabled()
+                ) {
+                    withAudioEnabled()
+                    Log.d("AUDIO", "Audio recording enabled")
+                } else {
+                    Log.e("AUDIO", "Audio permission not granted")
+                }
             }
             ?.start(ContextCompat.getMainExecutor(this)) { event ->
                 when (event) {
@@ -307,7 +326,8 @@ class CameraActivity : AppCompatActivity() {
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(
             Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
     }
 }
