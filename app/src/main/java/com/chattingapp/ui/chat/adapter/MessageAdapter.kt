@@ -1,6 +1,7 @@
 package com.chattingapp.ui.chat.adapter
 
 
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +17,7 @@ import com.chattingapp.ui.chat.Message
 import com.chattingapp.ui.chat.WaveformView
 import com.chattingapp.ui.chat.ChatRoomActivity
 import com.bumptech.glide.Glide
+import com.chattingapp.ui.chat.VideoPlayerActivity
 
 private const val TYPE_DATE_HEADER = 0
 private const val TYPE_TEXT_IN = 1
@@ -184,6 +186,9 @@ class MessageAdapter(
         private val btnPlay: ImageButton? = view.findViewById(R.id.btnPlayVideo)
 
         fun bind(message: Message) {
+            android.util.Log.d("VideoPlayer", "Binding video message: ${message.messageId}, url: ${message.mediaUrl}")
+            android.util.Log.d("VideoPlayer", "Video metadata: translateYN=${message.translateYN}, frameRate=${message.frameRate}, resolution=${message.resolution}")
+
             Glide.with(itemView.context)
                 .load(message.mediaUrl)
                 .placeholder(R.drawable.ic_video)
@@ -191,8 +196,33 @@ class MessageAdapter(
 
             tvDuration.text = message.durationSec?.let { String.format("%02d:%02d", it / 60, it % 60) } ?: ""
             tvTime?.text = message.sentAt // Only show time (HH:mm)
+
+            // Set click listener on the entire video item
+            itemView.setOnClickListener {
+                android.util.Log.d("VideoPlayer", "Video clicked: ${message.messageId}, type: ${message.messageType}")
+                if (message.messageType == "video" && message.mediaUrl != null) {
+                    // Launch video player
+                    val intent = Intent(itemView.context, VideoPlayerActivity::class.java).apply {
+                        putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, message.mediaUrl)
+                        putExtra(VideoPlayerActivity.EXTRA_MESSAGE_ID, message.messageId)
+                        putExtra(VideoPlayerActivity.EXTRA_ROOM_ID, message.roomId)
+                        putExtra(VideoPlayerActivity.EXTRA_TRANSLATE_YN, message.translateYN ?: "N")
+                        putExtra(VideoPlayerActivity.EXTRA_FRAME_RATE, message.frameRate ?: 30)
+                        putExtra(VideoPlayerActivity.EXTRA_RESOLUTION, message.resolution ?: "")
+                        putExtra(VideoPlayerActivity.EXTRA_DURATION, (message.durationSec ?: 0) * 1000)
+                    }
+                    android.util.Log.d("VideoPlayer", "Launching VideoPlayerActivity with URL: ${message.mediaUrl}")
+                    android.util.Log.d("VideoPlayer", "Intent extras: ${intent.extras}")
+                    itemView.context.startActivity(intent)
+                } else {
+                    android.util.Log.d("VideoPlayer", "Cannot launch: messageType=${message.messageType}, mediaUrl=${message.mediaUrl}")
+                }
+            }
+
+            // Also set click listener on play button if it exists
             btnPlay?.setOnClickListener {
-                // handle play video
+                android.util.Log.d("VideoPlayer", "Play button clicked")
+                itemView.performClick() // Trigger the same click as the item
             }
         }
     }

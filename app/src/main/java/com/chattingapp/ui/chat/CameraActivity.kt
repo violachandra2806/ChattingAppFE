@@ -35,6 +35,7 @@ import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import org.json.JSONObject
 
 class CameraActivity : AppCompatActivity() {
 
@@ -211,6 +212,7 @@ class CameraActivity : AppCompatActivity() {
             .addFormDataPart("video", file.name, file.asRequestBody("video/mp4".toMediaTypeOrNull()))
             .addFormDataPart("resolution", videoResolution)
             .addFormDataPart("frame_rate", videoFps.toString())
+            .addFormDataPart("translate_yn", "N")
             .build()
 
         val request = Request.Builder()
@@ -235,15 +237,36 @@ class CameraActivity : AppCompatActivity() {
                     if (response.isSuccessful) {
                         Log.i("UPLOAD_VIDEO", "✅ Upload Success")
 
-                        // CHANGE THIS: Return both URI and file path
-                        setResult(RESULT_OK, Intent().apply {
+                        // Get roomId and senderId from intent
+                        val roomId = intent.getStringExtra("room_id") ?: ""
+                        val senderId = intent.getStringExtra("sender_id") ?: ""
+
+                        // Parse response to get message_id if available
+                        var messageId = ""
+                        try {
+                            if (responseBody != null) {
+                                val json = JSONObject(responseBody)
+                                messageId = json.optString("message_id", "")
+                            }
+                        } catch (e: Exception) {
+                            Log.e("UPLOAD_VIDEO", "Failed to parse message_id", e)
+                        }
+
+                        // Start MediaPreviewActivity with all necessary data
+                        val intent = Intent(this@CameraActivity, MediaPreviewActivity::class.java).apply {
                             data = uri
-                            putExtra("video_file_path", file.absolutePath) // ADD THIS
-                            putExtra("video_file_name", file.name) // ADD THIS
-                            putExtra("video_resolution", videoResolution) // ADD THIS
-                            putExtra("video_fps", videoFps) // ADD THIS
-                        })
+                            putExtra(MediaPreviewActivity.EXTRA_VIDEO_URI, uri)
+                            putExtra(MediaPreviewActivity.EXTRA_VIDEO_FILE_PATH, file.absolutePath)
+                            putExtra(MediaPreviewActivity.EXTRA_VIDEO_FILE_NAME, file.name)
+                            putExtra(MediaPreviewActivity.EXTRA_VIDEO_RESOLUTION, videoResolution)
+                            putExtra(MediaPreviewActivity.EXTRA_VIDEO_FPS, videoFps)
+                            putExtra(MediaPreviewActivity.EXTRA_ROOM_ID, roomId)
+                            putExtra(MediaPreviewActivity.EXTRA_SENDER_ID, senderId)
+                            putExtra(MediaPreviewActivity.EXTRA_MESSAGE_ID, messageId)
+                        }
+                        startActivity(intent)
                         finish()
+
                     } else {
                         Log.e("UPLOAD_VIDEO", "❌ Upload failed: ${response.message}")
                         showErrorDialog("Upload failed: ${response.message}")

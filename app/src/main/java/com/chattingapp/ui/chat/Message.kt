@@ -13,5 +13,8 @@ data class Message(
         val transcriptText: String? = null,
         val sentAt: String,
         val sentAtRaw: String = "",
-        var isTranscribing: Boolean = false
+        var isTranscribing: Boolean = false,
+        val translateYN: String? = null,
+        val frameRate: Int? = null,
+        val resolution: String? = null
 ) : Serializable

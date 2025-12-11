@@ -272,7 +272,10 @@ class ChatRoomActivity : AppCompatActivity() {
             return
         }
 
-        val intent = Intent(this, CameraActivity::class.java)
+        val intent = Intent(this, CameraActivity::class.java).apply {
+            putExtra("room_id", roomId)
+            putExtra("sender_id", currentUserId)
+        }
         startActivityForResult(intent, REQUEST_CODE_VIDEO_CAPTURE)
     }
 
@@ -321,9 +324,19 @@ class ChatRoomActivity : AppCompatActivity() {
                                         ?.takeIf { it.isNotBlank() && !it.equals("null", true) },
                                     durationSec = if (o.has("duration_sec")) o.optInt("duration_sec") else null,
                                     transcriptText = transcript,
-                                    sentAt = formatTimeOnly(sentAtRaw), // HH:mm only
-                                    sentAtRaw = sentAtRaw
+                                    sentAt = formatTimeOnly(sentAtRaw),
+                                    sentAtRaw = sentAtRaw,
+                                    // Add these lines for video metadata
+                                    translateYN = o.optString("translate_yn", null)
+                                        ?.takeIf { it.isNotBlank() && !it.equals("null", true) },
+                                    frameRate = if (o.has("frame_rate")) o.optInt("frame_rate") else null,
+                                    resolution = o.optString("resolution", null)
+                                        ?.takeIf { it.isNotBlank() && !it.equals("null", true) }
                                 )
+
+                                if (message.messageType == "video") {
+                                    android.util.Log.d("ChatRoom", "Video message parsed: id=${message.messageId}, translateYN=${message.translateYN}, frameRate=${message.frameRate}, resolution=${message.resolution}")
+                                }
                                 list.add(message)
                             }
                         }

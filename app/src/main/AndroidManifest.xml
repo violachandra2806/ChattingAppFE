@@ -103,6 +103,10 @@
             android:name=".ui.chat.CameraActivity"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar" />
 
+        <activity
+            android:name=".ui.chat.VideoPlayerActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+
     </application>
 
 </manifest>

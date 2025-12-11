@@ -22,8 +22,6 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import com.chattingapp.BuildConfig
 import androidx.appcompat.app.AlertDialog
 
-data class SubtitleItem(val second: Double, val text: String)
-
 class MediaPreviewActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMediaBinding
     private lateinit var videoUri: Uri
@@ -37,7 +35,8 @@ class MediaPreviewActivity : AppCompatActivity() {
     private var fileSize: Long = 0
     private var roomId: String = ""
     private var senderId: String = ""
-    private var videoFileName: String = "" // ADD THIS
+    private var videoFileName: String = ""
+    private var messageId: String = ""
 
     private val subtitleItems = mutableListOf<SubtitleItem>()
     private val handler = Handler(Looper.getMainLooper())
@@ -46,12 +45,13 @@ class MediaPreviewActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_VIDEO_URI = "video_uri"
-        const val EXTRA_VIDEO_FILE_PATH = "video_file_path" // ADD THIS
-        const val EXTRA_VIDEO_FILE_NAME = "video_file_name" // ADD THIS
-        const val EXTRA_VIDEO_RESOLUTION = "video_resolution" // ADD THIS
-        const val EXTRA_VIDEO_FPS = "video_fps" // ADD THIS
+        const val EXTRA_VIDEO_FILE_PATH = "video_file_path"
+        const val EXTRA_VIDEO_FILE_NAME = "video_file_name"
+        const val EXTRA_VIDEO_RESOLUTION = "video_resolution"
+        const val EXTRA_VIDEO_FPS = "video_fps"
         const val EXTRA_ROOM_ID = "room_id"
         const val EXTRA_SENDER_ID = "sender_id"
+        const val EXTRA_MESSAGE_ID = "message_id"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,6 +66,7 @@ class MediaPreviewActivity : AppCompatActivity() {
         frameRate = intent.getIntExtra(EXTRA_VIDEO_FPS, 30)
         roomId = intent.getStringExtra(EXTRA_ROOM_ID)!!
         senderId = intent.getStringExtra(EXTRA_SENDER_ID)!!
+        messageId = intent.getStringExtra(EXTRA_MESSAGE_ID) ?: ""
 
         videoFile = if (videoFilePath != null && File(videoFilePath).exists()) {
             File(videoFilePath)
@@ -336,6 +337,11 @@ class MediaPreviewActivity : AppCompatActivity() {
                     val json = JSONObject(responseBody)
                     val status = json.optString("status", "error")
                     if (status == "success") {
+                        val msgId = json.optString("message_id", "")
+                        if (msgId.isNotEmpty()) {
+                            messageId = msgId
+                            Log.d("UPLOAD_VIDEO_NOTE", "Got message_id: $messageId")
+                        }
                         Log.i("UPLOAD_VIDEO_NOTE", "✅ Upload successful")
                         return@withContext json
                     } else {
@@ -366,6 +372,9 @@ class MediaPreviewActivity : AppCompatActivity() {
                     put("frame_rate", frameRate)
                     put("resolution", resolution)
                     put("generate_srt", false)
+                    if (messageId.isNotEmpty()) {
+                        put("message_id", messageId)
+                    }
                 }
 
                 val requestBody = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
@@ -496,6 +505,14 @@ class MediaPreviewActivity : AppCompatActivity() {
                     val uploadResponse = uploadVideoNote()
                     if (uploadResponse != null) {
                         mediaUrl = uploadResponse.optString("media_url", "")
+
+                        // Save message_id from upload response if it exists
+                        val msgId = uploadResponse.optString("message_id", "")
+                        if (msgId.isNotEmpty()) {
+                            messageId = msgId
+                            Log.d("SEND_VIDEO_NOTE", "Got message_id from upload: $messageId")
+                        }
+
                         Log.d("SEND_VIDEO_NOTE", "Uploaded successfully, media URL: $mediaUrl")
                     } else {
                         withContext(Dispatchers.Main) {
@@ -520,6 +537,12 @@ class MediaPreviewActivity : AppCompatActivity() {
                         put("file_size", fileSize)
                         put("resolution", resolution)
                         put("frame_rate", frameRate)
+                        put("translate_yn", "N")
+
+                        // Add message_id if we have it (from upload or previous translation)
+                        if (messageId.isNotEmpty()) {
+                            put("message_id", messageId)
+                        }
                     }
 
                     val requestBody = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
@@ -551,6 +574,14 @@ class MediaPreviewActivity : AppCompatActivity() {
 
                                 if (status == "success") {
                                     Log.i("SEND_VIDEO_NOTE", "✅ Video sent successfully")
+
+                                    // Save message_id from send response if it exists
+                                    val newMsgId = jsonResponse.optString("message_id", "")
+                                    if (newMsgId.isNotEmpty()) {
+                                        messageId = newMsgId
+                                        Log.d("SEND_VIDEO_NOTE", "Got message_id from send: $messageId")
+                                    }
+
                                     android.widget.Toast.makeText(
                                         this@MediaPreviewActivity,
                                         "Video sent successfully",
