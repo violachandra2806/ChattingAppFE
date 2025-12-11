@@ -19,7 +19,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"http://192.168.0.181:8080/chattingapp/\"")
+        buildConfigField("String", "BASE_URL", "\"http://192.168.18.41:8080/chattingapp/\"")
         buildConfigField("String", "SUPABASE_URL", "\"https://nxagvhkldfxenczfahch.supabase.co\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54YWd2aGtsZGZ4ZW5jemZhaGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0ODc4NTUsImV4cCI6MjA2MzA2Mzg1NX0.6fxDR2kDAzIbey_anvHyOM6FKhbcvOfPN0LMsKp2BuE\"")
     }
