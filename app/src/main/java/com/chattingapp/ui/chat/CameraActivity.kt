@@ -59,10 +59,18 @@ class CameraActivity : AppCompatActivity() {
         setContentView(R.layout.activity_camera)
 
         previewView = findViewById(R.id.previewView)
-        loadingOverlay = findViewById(R.id.loadingOverlay)   // ⬅️ INITIALIZED
+        loadingOverlay = findViewById(R.id.loadingOverlay)
 
-        if (allPermissionsGranted()) startCamera()
-        else ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+        // Request ALL permissions at once
+        if (!allPermissionsGranted()) {
+            ActivityCompat.requestPermissions(
+                this,
+                REQUIRED_PERMISSIONS,
+                REQUEST_CODE_PERMISSIONS
+            )
+        } else {
+            startCamera()   // ← CAMERA STARTS IMMEDIATELY
+        }
 
         findViewById<ImageView>(R.id.btnRecord).setOnClickListener { captureVideo() }
         findViewById<ImageView>(R.id.btnFlip).setOnClickListener {
@@ -76,31 +84,65 @@ class CameraActivity : AppCompatActivity() {
         ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (allPermissionsGranted()) {
+            startCamera()
+        }
+    }
+
+
     override fun onRequestPermissionsResult(
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            if (allPermissionsGranted()) {
+            // Check if ALL permissions are granted
+            val allGranted = grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+
+            if (allGranted) {
+                // Reinitialize camera after permissions are granted
                 startCamera()
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                    == PackageManager.PERMISSION_GRANTED) {
-                    Log.d("AUDIO", "Audio permission granted")
-                } else {
-                    Toast.makeText(this, "Audio permission required for recording", Toast.LENGTH_LONG).show()
-                }
             } else {
-                Toast.makeText(this, "Permissions not granted by user.", Toast.LENGTH_SHORT).show()
-//                finish()
+                // Check which permission was denied
+                val deniedPermissions = permissions.filterIndexed { index, _ ->
+                    grantResults[index] != PackageManager.PERMISSION_GRANTED
+                }
+
+                if (Manifest.permission.RECORD_AUDIO in deniedPermissions) {
+                    Toast.makeText(this, "Audio permission is required for recording", Toast.LENGTH_LONG).show()
+                    // Don't finish, let user retry
+                }
+
+                if (Manifest.permission.CAMERA in deniedPermissions) {
+                    Toast.makeText(this, "Camera permission is required", Toast.LENGTH_LONG).show()
+                    finish() // Can't use camera without camera permission
+                }
             }
         }
     }
 
     private fun startCamera() {
+        // Check if audio permission is granted
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // Log but don't request here - it's already handled in onCreate/onResume
+            Log.e("CAMERA", "Audio permission not granted")
+            Toast.makeText(this, "Audio permission required for recording", Toast.LENGTH_LONG).show()
+            return
+        }
+
         val providerFuture = ProcessCameraProvider.getInstance(this)
 
         providerFuture.addListener({
             val provider = providerFuture.get()
+
+            // Unbind first
+            provider.unbindAll()
+
             val preview = Preview.Builder().build().also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
@@ -114,14 +156,16 @@ class CameraActivity : AppCompatActivity() {
             val selector = if (isFrontCamera) CameraSelector.DEFAULT_FRONT_CAMERA
             else CameraSelector.DEFAULT_BACK_CAMERA
 
-            provider.unbindAll()
-
             try {
+                // Bind with audio enabled from the start
                 provider.bindToLifecycle(this, selector, preview, videoCapture)
+                Log.d("CAMERA", "Camera bound successfully - front: $isFrontCamera")
+
+                // Make sure preview is visible
+                previewView.visibility = View.VISIBLE
             } catch (e: Exception) {
                 Log.e("CAMERA", "Failed to bind camera: ${e.message}")
-                Toast.makeText(this, "Failed to start camera", Toast.LENGTH_SHORT).show()
-                finish()
+                Toast.makeText(this, "Failed to start camera: ${e.message}", Toast.LENGTH_SHORT).show()
             }
 
         }, ContextCompat.getMainExecutor(this))
@@ -152,6 +196,15 @@ class CameraActivity : AppCompatActivity() {
     }
 
     private fun captureVideo() {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            Toast.makeText(this, "Audio permission required for recording", Toast.LENGTH_LONG).show()
+            return
+        }
+
         val btnRecord = findViewById<ImageView>(R.id.btnRecord)
 
         if (recording != null) {
@@ -176,6 +229,7 @@ class CameraActivity : AppCompatActivity() {
 
         recording = videoCapture?.output
             ?.prepareRecording(this, options)
+            ?.withAudioEnabled()
             ?.apply {
                 if (ContextCompat.checkSelfPermission(
                         this@CameraActivity, Manifest.permission.RECORD_AUDIO
@@ -326,8 +380,7 @@ class CameraActivity : AppCompatActivity() {
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(
             Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
+            Manifest.permission.RECORD_AUDIO
         )
     }
 }
