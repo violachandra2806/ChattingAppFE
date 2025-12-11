@@ -54,6 +54,18 @@ class MediaPreviewActivity : AppCompatActivity() {
         const val EXTRA_MESSAGE_ID = "message_id"
     }
 
+    data class TranslateASLResponse(
+        val code: Int,
+        val created_at: String,
+        val data: List<SubtitleItem>,
+        val duration: String,
+        val message: String,
+        val message_id: String,
+        val srt_file: String,
+        val status: String,
+        val translated_script: String
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMediaBinding.inflate(layoutInflater)
@@ -337,10 +349,23 @@ class MediaPreviewActivity : AppCompatActivity() {
                     val json = JSONObject(responseBody)
                     val status = json.optString("status", "error")
                     if (status == "success") {
-                        val msgId = json.optString("message_id", "")
+                        // Try to get message_id from data array first
+                        val dataArray = json.optJSONArray("data")
+                        var msgId = ""
+
+                        if (dataArray != null && dataArray.length() > 0) {
+                            val firstItem = dataArray.getJSONObject(0)
+                            msgId = firstItem.optString("message_id", "")
+                        }
+
+                        // If not in data array, try root level (backward compatibility)
+                        if (msgId.isEmpty()) {
+                            msgId = json.optString("message_id", "")
+                        }
+
                         if (msgId.isNotEmpty()) {
                             messageId = msgId
-                            Log.d("UPLOAD_VIDEO_NOTE", "Got message_id: $messageId")
+                            Log.d("UPLOAD_VIDEO_NOTE", "✅ Got message_id: $messageId")
                         }
                         Log.i("UPLOAD_VIDEO_NOTE", "✅ Upload successful")
                         return@withContext json
@@ -402,10 +427,12 @@ class MediaPreviewActivity : AppCompatActivity() {
                         try {
                             val jsonResponse = JSONObject(responseBody)
                             val status = jsonResponse.optString("status", "error")
+                            val code = jsonResponse.optInt("code", -1)
 
-                            if (status == "success") {
+                            if (status == "success" || code == 0) {
                                 Log.i("TRANSLATE_ASL", "✅ Translation successful")
 
+                                // Parse the new response structure
                                 val dataArray = jsonResponse.optJSONArray("data")
                                 subtitleItems.clear()
 
@@ -417,6 +444,19 @@ class MediaPreviewActivity : AppCompatActivity() {
                                         subtitleItems.add(SubtitleItem(second, text))
                                     }
                                     Log.d("TRANSLATE_ASL", "Got ${subtitleItems.size} subtitle items")
+                                }
+
+                                // Get translated script for display
+                                val translatedScript = jsonResponse.optString("translated_script", "")
+                                if (translatedScript.isNotEmpty()) {
+                                    Log.d("TRANSLATE_ASL", "Translated script: $translatedScript")
+                                }
+
+                                // Get message_id from response if available
+                                val responseMessageId = jsonResponse.optString("message_id", "")
+                                if (responseMessageId.isNotEmpty()) {
+                                    messageId = responseMessageId
+                                    Log.d("TRANSLATE_ASL", "Updated message_id from translation: $messageId")
                                 }
 
                                 binding.subtitleTextView.visibility = android.view.View.VISIBLE
@@ -576,23 +616,69 @@ class MediaPreviewActivity : AppCompatActivity() {
                                     Log.i("SEND_VIDEO_NOTE", "✅ Video sent successfully")
 
                                     // Save message_id from send response if it exists
-                                    val newMsgId = jsonResponse.optString("message_id", "")
-                                    if (newMsgId.isNotEmpty()) {
-                                        messageId = newMsgId
-                                        Log.d("SEND_VIDEO_NOTE", "Got message_id from send: $messageId")
+                                    val dataArray = jsonResponse.optJSONArray("data")
+                                    if (dataArray != null && dataArray.length() > 0) {
+                                        val firstItem = dataArray.getJSONObject(0)
+                                        val newMsgId = firstItem.optString("message_id", "")
+                                        if (newMsgId.isNotEmpty()) {
+                                            messageId = newMsgId
+                                            Log.d("SEND_VIDEO_NOTE", "✅ Got message_id from send: $messageId")
+                                        } else {
+                                            Log.w("SEND_VIDEO_NOTE", "⚠️ No message_id found in data array")
+                                        }
+                                    } else {
+                                        Log.w("SEND_VIDEO_NOTE", "⚠️ No data array in response")
                                     }
 
-                                    android.widget.Toast.makeText(
-                                        this@MediaPreviewActivity,
-                                        "Video sent successfully",
-                                        android.widget.Toast.LENGTH_SHORT
-                                    ).show()
+                                    // Show progress while updating message ID
+                                    binding.progressBar.visibility = android.view.View.VISIBLE
+                                    binding.btnSend.isEnabled = false
+                                    binding.btnTranslateASL.isEnabled = false
 
-                                    // Return result to ChatRoomActivity
-                                    val resultIntent = Intent()
-                                    resultIntent.putExtra("video_sent", true)
-                                    setResult(RESULT_OK, resultIntent)
-                                    finish()
+                                    // Call updateMessageIdForTranslation after successful send
+                                    launch(Dispatchers.IO) {
+                                        // First: Update message_id for translation
+                                        val updateMessageIdSuccess = updateMessageIdForTranslation()
+
+                                        if (updateMessageIdSuccess) {
+                                            Log.i("SEND_VIDEO_NOTE", "✅ Message ID updated for translation")
+
+                                            // Second: Update translate_yn
+                                            val updateTranslateYnSuccess = updateTranslateYnForVideoNote()
+
+                                            withContext(Dispatchers.Main) {
+                                                binding.progressBar.visibility = android.view.View.GONE
+                                                binding.btnSend.isEnabled = true
+                                                binding.btnTranslateASL.isEnabled = true
+
+                                                if (updateTranslateYnSuccess) {
+                                                    Log.i("SEND_VIDEO_NOTE", "✅ Translate_yn updated successfully")
+                                                    android.widget.Toast.makeText(
+                                                        this@MediaPreviewActivity,
+                                                        "Video sent and updates completed successfully",
+                                                        android.widget.Toast.LENGTH_SHORT
+                                                    ).show()
+
+                                                    // Return result to ChatRoomActivity
+                                                    val resultIntent = Intent()
+                                                    resultIntent.putExtra("video_sent", true)
+                                                    setResult(RESULT_OK, resultIntent)
+                                                    finish()
+                                                } else {
+                                                    Log.w("SEND_VIDEO_NOTE", "⚠️ Message ID updated but failed to update translate_yn")
+                                                    showUpdateTranslateYnErrorDialog()
+                                                }
+                                            }
+                                        } else {
+                                            withContext(Dispatchers.Main) {
+                                                binding.progressBar.visibility = android.view.View.GONE
+                                                binding.btnSend.isEnabled = true
+                                                binding.btnTranslateASL.isEnabled = true
+                                                Log.w("SEND_VIDEO_NOTE", "⚠️ Video sent but failed to update message ID")
+                                                showUpdateMessageIdErrorDialog()
+                                            }
+                                        }
+                                    }
                                 } else {
                                     val error = jsonResponse.optString("error", "Failed to send video")
                                     Log.e("SEND_VIDEO_NOTE", "❌ Send failed: $error")
@@ -639,6 +725,289 @@ class MediaPreviewActivity : AppCompatActivity() {
                         retryAction = { sendVideoNote() }
                     )
                 }
+            }
+        }
+    }
+
+    private fun showUpdateTranslateYnErrorDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Update Failed")
+            .setMessage("Message ID updated but failed to update translate status. Do you want to retry updating translate status?")
+            .setCancelable(false)
+            .setPositiveButton("Retry Update") { _, _ ->
+                // Only retry the translate_yn update
+                retryUpdateTranslateYnForVideoNote()
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                // User chooses to proceed without translate_yn update
+                val resultIntent = Intent()
+                resultIntent.putExtra("video_sent", true)
+                setResult(RESULT_OK, resultIntent)
+                finish()
+            }
+            .show()
+    }
+
+    private fun retryUpdateTranslateYnForVideoNote() {
+        binding.progressBar.visibility = android.view.View.VISIBLE
+        binding.btnSend.isEnabled = false
+        binding.btnTranslateASL.isEnabled = false
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val updateSuccess = updateTranslateYnForVideoNote()
+
+            withContext(Dispatchers.Main) {
+                binding.progressBar.visibility = android.view.View.GONE
+                binding.btnSend.isEnabled = true
+                binding.btnTranslateASL.isEnabled = true
+
+                if (updateSuccess) {
+                    Log.i("RETRY_TRANSLATE_YN", "✅ Translate_yn updated successfully")
+                    android.widget.Toast.makeText(
+                        this@MediaPreviewActivity,
+                        "Translate status updated successfully",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+
+                    // Return result to ChatRoomActivity
+                    val resultIntent = Intent()
+                    resultIntent.putExtra("video_sent", true)
+                    setResult(RESULT_OK, resultIntent)
+                    finish()
+                } else {
+                    Log.w("RETRY_TRANSLATE_YN", "⚠️ Failed to update translate_yn on retry")
+                    showUpdateTranslateYnErrorDialog()
+                }
+            }
+        }
+    }
+
+    private fun showUpdateMessageIdErrorDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Update Failed")
+            .setMessage("Video sent but failed to update message ID for translation. Do you want to retry updating?")
+            .setCancelable(false)
+            .setPositiveButton("Retry Update") { _, _ ->
+                // Only retry the update, not the entire send
+                retryUpdateMessageIdForTranslation()
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                // User chooses to proceed without update
+                val resultIntent = Intent()
+                resultIntent.putExtra("video_sent", true)
+                setResult(RESULT_OK, resultIntent)
+                finish()
+            }
+            .show()
+    }
+
+    private fun retryUpdateMessageIdForTranslation() {
+        binding.progressBar.visibility = android.view.View.VISIBLE
+        binding.btnSend.isEnabled = false
+        binding.btnTranslateASL.isEnabled = false
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            // First retry message_id update
+            val updateMessageIdSuccess = updateMessageIdForTranslation()
+
+            if (updateMessageIdSuccess) {
+                // Then try translate_yn update
+                val updateTranslateYnSuccess = updateTranslateYnForVideoNote()
+
+                withContext(Dispatchers.Main) {
+                    binding.progressBar.visibility = android.view.View.GONE
+                    binding.btnSend.isEnabled = true
+                    binding.btnTranslateASL.isEnabled = true
+
+                    if (updateTranslateYnSuccess) {
+                        Log.i("RETRY_UPDATE", "✅ Both updates completed successfully")
+                        android.widget.Toast.makeText(
+                            this@MediaPreviewActivity,
+                            "Updates completed successfully",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+
+                        // Return result to ChatRoomActivity
+                        val resultIntent = Intent()
+                        resultIntent.putExtra("video_sent", true)
+                        setResult(RESULT_OK, resultIntent)
+                        finish()
+                    } else {
+                        Log.w("RETRY_UPDATE", "⚠️ Message ID updated but failed to update translate_yn")
+                        showUpdateTranslateYnErrorDialog()
+                    }
+                }
+            } else {
+                withContext(Dispatchers.Main) {
+                    binding.progressBar.visibility = android.view.View.GONE
+                    binding.btnSend.isEnabled = true
+                    binding.btnTranslateASL.isEnabled = true
+                    Log.w("RETRY_UPDATE", "⚠️ Failed to update message ID on retry")
+                    showUpdateMessageIdErrorDialog()
+                }
+            }
+        }
+    }
+
+    private suspend fun updateMessageIdForTranslation(): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                if (messageId.isEmpty() || mediaUrl.isEmpty()) {
+                    Log.e("UPDATE_MESSAGE_ID", "Missing message_id or media_url")
+                    Log.e("UPDATE_MESSAGE_ID", "message_id: $messageId")
+                    Log.e("UPDATE_MESSAGE_ID", "media_url: $mediaUrl")
+                    return@withContext false
+                }
+
+                val client = okhttp3.OkHttpClient()
+
+                val json = JSONObject().apply {
+                    put("room_id", roomId)
+                    put("video_url", mediaUrl)
+                    put("message_id", messageId)
+                }
+
+                // ADD THIS: Detailed logging of the data being sent
+                Log.d("UPDATE_MESSAGE_ID", "=== SENDING UPDATE REQUEST ===")
+                Log.d("UPDATE_MESSAGE_ID", "room_id: $roomId")
+                Log.d("UPDATE_MESSAGE_ID", "video_url: $mediaUrl")
+                Log.d("UPDATE_MESSAGE_ID", "message_id: $messageId")
+                Log.d("UPDATE_MESSAGE_ID", "Full JSON: $json")
+                Log.d("UPDATE_MESSAGE_ID", "Request URL: ${BuildConfig.BASE_URL}updatemessageidtranslatevideo")
+                Log.d("UPDATE_MESSAGE_ID", "=== END REQUEST DATA ===")
+
+                val requestBody = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
+
+                val request = okhttp3.Request.Builder()
+                    .url("${BuildConfig.BASE_URL}updatemessageidtranslatevideo")
+                    .post(requestBody)
+                    .build()
+
+                Log.d("UPDATE_MESSAGE_ID", "Request URL: ${request.url}")
+                Log.d("UPDATE_MESSAGE_ID", "Request body: $json")
+
+                val response = client.newCall(request).execute()
+                val responseBody = response.body?.string()
+
+                Log.d("UPDATE_MESSAGE_ID", "=== RESPONSE ===")
+                Log.d("UPDATE_MESSAGE_ID", "Response code: ${response.code}")
+                Log.d("UPDATE_MESSAGE_ID", "Response body: $responseBody")
+                Log.d("UPDATE_MESSAGE_ID", "=== END RESPONSE ===")
+
+                response.close()
+
+                if (responseBody != null) {
+                    val jsonResponse = JSONObject(responseBody)
+                    val status = jsonResponse.optString("status", "error")
+                    val code = jsonResponse.optInt("code", -1)
+
+                    // Check both status and code
+                    if (status == "success" || code == 0) {
+                        Log.i("UPDATE_MESSAGE_ID", "✅ Message ID updated successfully")
+
+                        // Also check data if available
+                        val dataObj = jsonResponse.optJSONObject("data")
+                        if (dataObj != null) {
+                            val dataStatus = dataObj.optString("status", "")
+                            val updatedCount = dataObj.optInt("updated", 0)
+                            Log.d("UPDATE_MESSAGE_ID", "Data status: $dataStatus, Updated: $updatedCount")
+                        }
+
+                        return@withContext true
+                    } else {
+                        val error = jsonResponse.optString("error", "Update failed")
+                        val message = jsonResponse.optString("message", "No message")
+                        Log.e("UPDATE_MESSAGE_ID", "❌ Update failed: $error")
+                        Log.e("UPDATE_MESSAGE_ID", "❌ Message: $message")
+                        return@withContext false
+                    }
+                } else {
+                    Log.e("UPDATE_MESSAGE_ID", "❌ Empty response body")
+                    return@withContext false
+                }
+            } catch (e: Exception) {
+                Log.e("UPDATE_MESSAGE_ID", "❌ Exception: ${e.message}", e)
+                Log.e("UPDATE_MESSAGE_ID", "❌ Stack trace:", e)
+                return@withContext false
+            }
+        }
+    }
+
+    private suspend fun updateTranslateYnForVideoNote(): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                if (messageId.isEmpty()) {
+                    Log.e("UPDATE_TRANSLATE_YN", "Missing message_id")
+                    Log.e("UPDATE_TRANSLATE_YN", "message_id: $messageId")
+                    return@withContext false
+                }
+
+                val client = okhttp3.OkHttpClient()
+
+                val json = JSONObject().apply {
+                    put("message_id", messageId)
+                }
+
+                // Log the request
+                Log.d("UPDATE_TRANSLATE_YN", "=== SENDING UPDATE TRANSLATE_YN REQUEST ===")
+                Log.d("UPDATE_TRANSLATE_YN", "message_id: $messageId")
+                Log.d("UPDATE_TRANSLATE_YN", "Full JSON: $json")
+                Log.d("UPDATE_TRANSLATE_YN", "Request URL: ${BuildConfig.BASE_URL}updatetranslateynvideonotes")
+                Log.d("UPDATE_TRANSLATE_YN", "=== END REQUEST DATA ===")
+
+                val requestBody = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
+
+                val request = okhttp3.Request.Builder()
+                    .url("${BuildConfig.BASE_URL}updatetranslateynvideonotes")
+                    .post(requestBody)
+                    .build()
+
+                Log.d("UPDATE_TRANSLATE_YN", "Request URL: ${request.url}")
+                Log.d("UPDATE_TRANSLATE_YN", "Request body: $json")
+
+                val response = client.newCall(request).execute()
+                val responseBody = response.body?.string()
+
+                Log.d("UPDATE_TRANSLATE_YN", "=== RESPONSE ===")
+                Log.d("UPDATE_TRANSLATE_YN", "Response code: ${response.code}")
+                Log.d("UPDATE_TRANSLATE_YN", "Response body: $responseBody")
+                Log.d("UPDATE_TRANSLATE_YN", "=== END RESPONSE ===")
+
+                response.close()
+
+                if (responseBody != null) {
+                    val jsonResponse = JSONObject(responseBody)
+                    val status = jsonResponse.optString("status", "error")
+                    val code = jsonResponse.optInt("code", -1)
+
+                    // Check both status and code
+                    if (status == "success" || code == 0) {
+                        Log.i("UPDATE_TRANSLATE_YN", "✅ Translate_yn updated successfully")
+
+                        // Also check data if available
+                        val dataArray = jsonResponse.optJSONArray("data")
+                        if (dataArray != null && dataArray.length() > 0) {
+                            val firstItem = dataArray.getJSONObject(0)
+                            val translateYn = firstItem.optString("translate_yn", "N")
+                            Log.d("UPDATE_TRANSLATE_YN", "Translate_yn value: $translateYn")
+                        }
+
+                        return@withContext true
+                    } else {
+                        val error = jsonResponse.optString("error", "Update failed")
+                        val message = jsonResponse.optString("message", "No message")
+                        Log.e("UPDATE_TRANSLATE_YN", "❌ Update failed: $error")
+                        Log.e("UPDATE_TRANSLATE_YN", "❌ Message: $message")
+                        return@withContext false
+                    }
+                } else {
+                    Log.e("UPDATE_TRANSLATE_YN", "❌ Empty response body")
+                    return@withContext false
+                }
+            } catch (e: Exception) {
+                Log.e("UPDATE_TRANSLATE_YN", "❌ Exception: ${e.message}", e)
+                Log.e("UPDATE_TRANSLATE_YN", "❌ Stack trace:", e)
+                return@withContext false
             }
         }
     }

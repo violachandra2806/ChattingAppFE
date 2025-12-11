@@ -91,7 +91,7 @@ class CameraActivity : AppCompatActivity() {
                 }
             } else {
                 Toast.makeText(this, "Permissions not granted by user.", Toast.LENGTH_SHORT).show()
-                finish()
+//                finish()
             }
         }
     }
