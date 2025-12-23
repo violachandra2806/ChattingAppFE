@@ -100,6 +100,14 @@ class VerificationCodeActivity : AppCompatActivity() {
                 runOnUiThread {
                     if (codeResp in 200..299) {
                         Toast.makeText(this, "Password berhasil diubah", Toast.LENGTH_SHORT).show()
+                            try {
+                                val respJson = JSONObject(resp)
+                                val status = respJson.optString("status", "")
+                                val message = respJson.optString("message", "")
+                                // response: { "code": 0, "data": [], "message": "Password updated successfully", "status": "success" }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         val i = Intent(this, LoginActivity::class.java)
                         i.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                         startActivity(i)
@@ -139,6 +147,11 @@ class VerificationCodeActivity : AppCompatActivity() {
                 runOnUiThread {
                     if (codeResp in 200..299) {
                         Toast.makeText(this, "Email terkirim ulang", Toast.LENGTH_SHORT).show()
+                            try {
+                                // response has data array with send_result and verification_code_set
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         startResendCountdown()
                     } else {
                         Toast.makeText(this, "Gagal mengirim ulang", Toast.LENGTH_LONG).show()

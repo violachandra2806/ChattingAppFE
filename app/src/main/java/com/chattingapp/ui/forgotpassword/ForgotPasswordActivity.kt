@@ -93,6 +93,14 @@ class ForgotPasswordActivity : AppCompatActivity() {
                 runOnUiThread {
                     if (code in 200..299) {
                         Toast.makeText(this, "Email terkirim", Toast.LENGTH_SHORT).show()
+                            try {
+                                val respJson = JSONObject(resp)
+                                val status = respJson.optString("status", "")
+                                val message = respJson.optString("message", "")
+                                // response has data array with send_result and verification_code_set
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         // go to verification screen
                         val intent = Intent(this, VerificationCodeActivity::class.java)
                         intent.putExtra("user_email", email)
