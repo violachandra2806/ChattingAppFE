@@ -119,5 +119,16 @@
             android:backgroundTint="@color/light_purple"
             android:textColor="@color/white" />
 
+        <Button
+            android:id="@+id/buttonResend"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Resend"
+            android:textAllCaps="false"
+            android:layout_marginTop="12dp"
+            android:backgroundTint="@color/white"
+            android:textColor="@color/light_purple"
+            android:enabled="false" />
+
     </LinearLayout>
 </ScrollView>
