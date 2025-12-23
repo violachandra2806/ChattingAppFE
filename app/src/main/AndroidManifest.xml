@@ -72,6 +72,20 @@
             android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize" />
 
+        <!-- 🛠 Edit Profile -->
+        <activity
+            android:name=".ui.editprofile.EditProfileActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- ✅ Verification Code (Password reset) -->
+        <activity
+            android:name=".ui.forgotpassword.VerificationCodeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- 📌 Main Dashboard -->
         <activity
             android:name=".ui.dashboard.DashboardActivity"
