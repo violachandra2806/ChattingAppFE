@@ -14,9 +14,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.android.volley.Request
+import com.android.volley.RequestQueue
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.chattingapp.BuildConfig
+import com.chattingapp.R
 import com.chattingapp.databinding.FragmentDashboardBinding
 import com.chattingapp.ui.chat.ChatRoomActivity
 import com.chattingapp.utils.SharedPreferencesManager
@@ -38,6 +40,9 @@ class DashboardFragment : Fragment() {
     private var _binding: FragmentDashboardBinding? = null
     private val binding get() = _binding!!
 
+    private var requestQueue: RequestQueue? = null
+    private val volleyTag = "DashboardFragment"
+
     private val chatRooms = mutableListOf<ChatRoom>()
     private lateinit var adapter: ChatRoomAdapter
 
@@ -56,6 +61,10 @@ class DashboardFragment : Fragment() {
     ): View {
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
 
+        if (requestQueue == null) {
+            requestQueue = Volley.newRequestQueue(requireContext().applicationContext)
+        }
+
         val sharedPreferencesManager = SharedPreferencesManager(requireContext())
         currentUserId = sharedPreferencesManager.getUserId() ?: ""
 
@@ -68,10 +77,18 @@ class DashboardFragment : Fragment() {
         Log.d("Dashboard", "Final Current User ID: $currentUserId")
 
         if (currentUserId.isEmpty()) {
-            Toast.makeText(requireContext(), "User not logged in", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), getString(R.string.msg_user_not_logged_in), Toast.LENGTH_SHORT).show()
             requireActivity().finish()
             return binding.root
         }
+
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        if (currentUserId.isEmpty()) return
 
         setupRecyclerView()
         setupSearch()
@@ -79,11 +96,10 @@ class DashboardFragment : Fragment() {
 
         // ✅ Initialize realtime subscription
         initRealtimeSubscription()
-
-        return binding.root
     }
 
     private fun setupRecyclerView() {
+        val binding = _binding ?: return
         adapter = ChatRoomAdapter(chatRooms) { chatRoom ->
             openChatRoom(chatRoom)
         }
@@ -112,6 +128,7 @@ class DashboardFragment : Fragment() {
     }
 
     private fun setupSearch() {
+        val binding = _binding ?: return
         binding.searchChat.setOnEditorActionListener(null)
 
         binding.btnSearch.setOnClickListener {
@@ -129,6 +146,7 @@ class DashboardFragment : Fragment() {
     }
 
     private fun performSearch() {
+        val binding = _binding ?: return
         val inputMethodManager = requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
         inputMethodManager.hideSoftInputFromWindow(binding.searchChat.windowToken, 0)
 
@@ -141,6 +159,8 @@ class DashboardFragment : Fragment() {
 
     private fun fetchChatRooms() {
         if (isLoading) return
+
+        val binding = _binding ?: return
 
         isLoading = true
         binding.progressBar.isVisible = currentPage == 1
@@ -156,8 +176,12 @@ class DashboardFragment : Fragment() {
         val request = JsonObjectRequest(Request.Method.GET, url, null,
             { response ->
                 isLoading = false
-                binding.progressBar.isVisible = false
-                binding.progressBarBottom.isVisible = false
+
+                val binding = _binding
+                if (binding != null) {
+                    binding.progressBar.isVisible = false
+                    binding.progressBarBottom.isVisible = false
+                }
 
                 try {
                     if (response.getString("status") == "success" && response.getInt("code") == 0) {
@@ -205,19 +229,23 @@ class DashboardFragment : Fragment() {
             },
             { error ->
                 isLoading = false
-                binding.progressBar.isVisible = false
-                binding.progressBarBottom.isVisible = false
+                val binding = _binding
+                if (binding != null) {
+                    binding.progressBar.isVisible = false
+                    binding.progressBarBottom.isVisible = false
+                }
                 handleError("Failed to load chat rooms: ${error.message}")
             })
 
-        Volley.newRequestQueue(requireContext()).add(request)
+        request.tag = volleyTag
+        requestQueue?.add(request)
     }
 
     // ✅ REALTIME SUBSCRIPTION FOR CHAT_ROOM TABLE
     private fun initRealtimeSubscription() {
         val supabase = SupabaseClient.getClient(requireContext())
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 Log.d("DashboardRealtime", "=== STARTING REALTIME SUBSCRIPTION ===")
                 Log.d("DashboardRealtime", "User ID: $currentUserId")
@@ -239,11 +267,11 @@ class DashboardFragment : Fragment() {
                 // Handle changes
                 changeFlow.onEach { action ->
                     handleRealtimeAction(action)
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 changeFlow2.onEach { action ->
                     handleRealtimeAction(action)
-                }.launchIn(lifecycleScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
                 realtimeChannel!!.subscribe()
                 Log.d("DashboardRealtime", "✅ Successfully subscribed to chat_room table")
@@ -339,6 +367,7 @@ class DashboardFragment : Fragment() {
     }
 
     private fun updateOrInsertRoom(room: ChatRoom) {
+        val binding = _binding ?: return
         val index = chatRooms.indexOfFirst { it.id == room.id }
 
         if (index != -1) {
@@ -361,6 +390,7 @@ class DashboardFragment : Fragment() {
 
     private fun removeRoomFromList(roomId: String) {
         lifecycleScope.launch(Dispatchers.Main) {
+            if (_binding == null) return@launch
             val index = chatRooms.indexOfFirst { it.id == roomId }
             if (index != -1) {
                 chatRooms.removeAt(index)
@@ -396,6 +426,7 @@ class DashboardFragment : Fragment() {
     }
 
     private fun updateEmptyState() {
+        val binding = _binding ?: return
         if (chatRooms.isEmpty()) {
             binding.tvNoData.isVisible = true
             binding.recyclerChatRooms.isVisible = false
@@ -406,7 +437,10 @@ class DashboardFragment : Fragment() {
     }
 
     private fun handleError(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+        val context = context
+        if (context != null) {
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
         updateEmptyState()
     }
 
@@ -423,6 +457,8 @@ class DashboardFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+
+        requestQueue?.cancelAll(volleyTag)
 
         // ✅ Unsubscribe from realtime
         try {

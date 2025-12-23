@@ -3,6 +3,7 @@ package com.chattingapp.ui.friendlist.addfriend
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -10,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.chattingapp.R
-import com.google.android.material.textfield.TextInputEditText
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -32,7 +32,7 @@ class AddFriendActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
 
         if (currentUserId.isEmpty()) {
-            Toast.makeText(this, "Sesi login tidak ditemukan", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_login_session_missing), Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -41,7 +41,7 @@ class AddFriendActivity : AppCompatActivity() {
         setContentView(R.layout.activity_add_friend)
 
         val btnBack = findViewById<ImageView>(R.id.btnBack)
-        val inputSearch = findViewById<TextInputEditText>(R.id.inputSearchUsername)
+        val inputSearch = findViewById<EditText>(R.id.inputSearchUsername)
         val iconSend = findViewById<ImageView>(R.id.iconSendSearchUsername)
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewResults)
         textSearchInfo = findViewById(R.id.textSearchInfo)
@@ -92,7 +92,7 @@ class AddFriendActivity : AppCompatActivity() {
                 val responseCode = conn.responseCode
                 if (responseCode != HttpURLConnection.HTTP_OK) {
                     runOnUiThread {
-                        Toast.makeText(this, "Server error ($responseCode)", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.msg_server_error_with_code, responseCode), Toast.LENGTH_SHORT).show()
                     }
                     return@thread
                 }
@@ -102,7 +102,7 @@ class AddFriendActivity : AppCompatActivity() {
 
                 if (json.getString("status") != "success") {
                     runOnUiThread {
-                        val message = json.optString("message", "Tidak ada hasil ditemukan")
+                        val message = json.optString("message", getString(R.string.msg_no_results_found))
                         textSearchInfo.text = message
                         textSearchInfo.visibility = TextView.VISIBLE
                         adapter.updateList(mutableListOf())
@@ -126,10 +126,10 @@ class AddFriendActivity : AppCompatActivity() {
 
                 runOnUiThread {
                     if (friends.isEmpty()) {
-                        textSearchInfo.text = "Tidak ada hasil untuk \"$keyword\""
+                        textSearchInfo.text = getString(R.string.msg_no_results_for, keyword)
                         adapter.updateList(mutableListOf())
                     } else {
-                        textSearchInfo.text = "Ditemukan ${friends.size} hasil untuk \"$keyword\""
+                        textSearchInfo.text = getString(R.string.msg_found_results_for, friends.size, keyword)
                         adapter.updateList(friends)
                     }
                     textSearchInfo.visibility = TextView.VISIBLE
@@ -138,7 +138,7 @@ class AddFriendActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
                 runOnUiThread {
-                    Toast.makeText(this, "Gagal mencari teman: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_search_friend_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -168,16 +168,16 @@ class AddFriendActivity : AppCompatActivity() {
 
                 runOnUiThread {
                     if (json.getString("status") == "success") {
-                        Toast.makeText(this, "Permintaan pertemanan dikirim!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.msg_friend_request_sent), Toast.LENGTH_SHORT).show()
                     } else {
-                        val msg = json.optString("message", "Gagal mengirim permintaan")
+                        val msg = json.optString("message", getString(R.string.msg_friend_request_send_failed))
                         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 runOnUiThread {
-                    Toast.makeText(this, "Terjadi kesalahan jaringan", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_network_error), Toast.LENGTH_SHORT).show()
                 }
             }
         }

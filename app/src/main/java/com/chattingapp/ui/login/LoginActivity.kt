@@ -19,11 +19,6 @@ import com.chattingapp.ui.forgotpassword.ForgotPasswordActivity
 import com.chattingapp.ui.friendlist.FriendListFragment
 import com.chattingapp.ui.friendlist.friendrequest.FriendRequestActivity
 import com.chattingapp.ui.register.RegisterActivity
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
 import org.json.JSONObject
 
 class LoginActivity : AppCompatActivity() {
@@ -31,13 +26,10 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var emailInput: EditText
     private lateinit var passwordInput: EditText
     private lateinit var loginButton: Button
-    private lateinit var googleLogin: LinearLayout
     private lateinit var registerText: TextView
     private lateinit var forgotPasswordText: TextView
     private lateinit var togglePasswordVisibility: ImageView
     private var isPasswordVisible = false
-
-    private lateinit var googleSignInClient: GoogleSignInClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,7 +38,6 @@ class LoginActivity : AppCompatActivity() {
         emailInput = findViewById(R.id.editTextEmailUsername)
         passwordInput = findViewById(R.id.editTextPassword)
         loginButton = findViewById(R.id.buttonLogin)
-        googleLogin = findViewById(R.id.buttonGoogle)
         registerText = findViewById(R.id.textRegister)
         forgotPasswordText = findViewById(R.id.forgotPassword)
         togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility)
@@ -69,19 +60,16 @@ class LoginActivity : AppCompatActivity() {
             val password = passwordInput.text.toString().trim()
 
             if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Email dan password harus diisi", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_login_fields_required), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             loginUser(email, password)
         }
 
-        googleLogin.setOnClickListener { signInWithGoogle() }
         registerText.setOnClickListener { startActivity(Intent(this, RegisterActivity::class.java)) }
         forgotPasswordText.setOnClickListener {
             startActivity(Intent(this, ForgotPasswordActivity::class.java))
         }
-
-        setupGoogleSignIn()
     }
 
     private fun togglePasswordVisibility() {
@@ -139,7 +127,7 @@ class LoginActivity : AppCompatActivity() {
                             val savedUserId = sharedPreferencesManager.getUserId()
                             Log.d("Login", "Verified saved User ID from SharedPreferencesManager: $savedUserId")
 
-                            Toast.makeText(this, "Login berhasil!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, getString(R.string.msg_login_success), Toast.LENGTH_SHORT).show()
 
                             Log.d("Login", "Starting DashboardActivity...")
                             // Navigate to DashboardActivity (main app)
@@ -160,48 +148,19 @@ class LoginActivity : AppCompatActivity() {
                     }
                 } catch (e: Exception) {
                     Log.e("Login", "JSON Parsing Error: ${e.message}", e)
-                    Toast.makeText(this, "Terjadi kesalahan", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_generic_error), Toast.LENGTH_SHORT).show()
                 }
             },
             { error ->
                 Log.e("Login", "Volley Error: ${error.message}", error)
                 val errorMsg = error.networkResponse?.let {
                     String(it.data, Charsets.UTF_8)
-                } ?: error.message ?: "Error tidak diketahui"
-                Toast.makeText(this, "Gagal login: $errorMsg", Toast.LENGTH_SHORT).show()
+                } ?: error.message ?: getString(R.string.msg_unknown_error)
+                Toast.makeText(this, getString(R.string.msg_login_failed, errorMsg), Toast.LENGTH_SHORT).show()
             }
         )
 
         Volley.newRequestQueue(this).add(request)
     }
 
-    private fun setupGoogleSignIn() {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .build()
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
-    }
-
-    private fun signInWithGoogle() {
-        val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(signInIntent, RC_SIGN_IN)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == RC_SIGN_IN) {
-            try {
-                val account = GoogleSignIn.getSignedInAccountFromIntent(data).getResult(ApiException::class.java)
-                Toast.makeText(this, "Login Google berhasil: ${account.email}", Toast.LENGTH_SHORT).show()
-
-            } catch (e: ApiException) {
-                Log.e("GoogleSignIn", "Error code: ${e.statusCode}")
-                Toast.makeText(this, "Login Google gagal", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    companion object {
-        private const val RC_SIGN_IN = 1001
-    }
 }

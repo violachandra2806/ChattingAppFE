@@ -60,25 +60,29 @@ class ForgotPasswordActivity : AppCompatActivity() {
         val email = editTextEmail.text.toString().trim()
 
         if (email.isEmpty()) {
-            editTextEmail.error = "Email tidak boleh kosong"
-            Toast.makeText(this, "Masukkan email Anda", Toast.LENGTH_SHORT).show()
+            val message = getString(R.string.msg_email_required)
+            editTextEmail.error = message
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
             return
         }
 
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            editTextEmail.error = "Format email tidak valid"
-            Toast.makeText(this, "Format email tidak valid", Toast.LENGTH_SHORT).show()
+            val message = getString(R.string.msg_email_invalid)
+            editTextEmail.error = message
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
             return
         }
 
         // Send payload to /chattingapp/sendemail
         Thread {
             try {
-                val url = URL("${BuildConfig.BASE_URL}chattingapp/sendemail")
+            val url = URL("${BuildConfig.BASE_URL}sendemail")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
                 conn.doOutput = true
+            conn.connectTimeout = 15_000
+            conn.readTimeout = 15_000
 
                 val payload = JSONObject()
                 payload.put("user_email", email)
@@ -88,11 +92,14 @@ class ForgotPasswordActivity : AppCompatActivity() {
                 }
 
                 val code = conn.responseCode
-                val resp = conn.inputStream.bufferedReader().use { it.readText() }
+                val resp = (if (code in 200..299) conn.inputStream else conn.errorStream)
+                    ?.bufferedReader()
+                    ?.use { it.readText() }
+                    .orEmpty()
 
                 runOnUiThread {
                     if (code in 200..299) {
-                        Toast.makeText(this, "Email terkirim", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.msg_email_sent), Toast.LENGTH_SHORT).show()
                             try {
                                 val respJson = JSONObject(resp)
                                 val status = respJson.optString("status", "")
@@ -110,13 +117,15 @@ class ForgotPasswordActivity : AppCompatActivity() {
                         startActivity(intent)
                         finish()
                     } else {
-                        Toast.makeText(this, "Gagal mengirim email", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, getString(R.string.msg_email_send_failed), Toast.LENGTH_LONG).show()
                     }
                 }
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                runOnUiThread { Toast.makeText(this, "Terjadi kesalahan jaringan", Toast.LENGTH_SHORT).show() }
+                runOnUiThread {
+                    Toast.makeText(this, getString(R.string.msg_network_error), Toast.LENGTH_SHORT).show()
+                }
             }
         }.start()
     }

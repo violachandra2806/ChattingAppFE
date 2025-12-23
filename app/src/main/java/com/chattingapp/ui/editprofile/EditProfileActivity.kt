@@ -54,7 +54,7 @@ class EditProfileActivity : AppCompatActivity() {
         changePassword = findViewById(R.id.textChangePassword)
 
         editPassword.isEnabled = false
-        editPassword.setText("*******")
+        editPassword.setText(getString(R.string.placeholder_password_mask))
 
         backIcon.setOnClickListener { finish() }
 
@@ -64,7 +64,7 @@ class EditProfileActivity : AppCompatActivity() {
         addChangeListeners()
 
         val userId = prefs.getString("user_id", null)
-        if (userId != null) fetchUserDetails(userId) else Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
+        if (userId != null) fetchUserDetails(userId) else Toast.makeText(this, getString(R.string.msg_user_not_logged_in), Toast.LENGTH_SHORT).show()
 
         buttonSave.setOnClickListener { handleSave() }
 
@@ -96,7 +96,7 @@ class EditProfileActivity : AppCompatActivity() {
     private fun fetchUserDetails(userId: String) {
         Thread {
             try {
-                val url = URL("${BuildConfig.BASE_URL}chattingapp/getuserdetailsbyid?user_id=$userId")
+                val url = URL("${BuildConfig.BASE_URL}getuserdetailsbyid?user_id=$userId")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "GET"
                 conn.connectTimeout = 15000
@@ -127,14 +127,14 @@ class EditProfileActivity : AppCompatActivity() {
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                runOnUiThread { Toast.makeText(this, "Gagal memuat data pengguna", Toast.LENGTH_SHORT).show() }
+                runOnUiThread { Toast.makeText(this, getString(R.string.msg_failed_load_user_data), Toast.LENGTH_SHORT).show() }
             }
         }.start()
     }
 
     private fun handleSave() {
         val userId = prefs.getString("user_id", null) ?: run {
-            Toast.makeText(this, "User not logged in", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_user_not_logged_in), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -148,7 +148,7 @@ class EditProfileActivity : AppCompatActivity() {
 
         Thread {
             try {
-                val url = URL("${BuildConfig.BASE_URL}chattingapp/updateuser")
+                val url = URL("${BuildConfig.BASE_URL}updateuser")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
@@ -164,13 +164,13 @@ class EditProfileActivity : AppCompatActivity() {
 
                 runOnUiThread {
                     if (respCode in 200..299) {
-                        Toast.makeText(this, "Profil berhasil diperbarui", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.msg_profile_updated), Toast.LENGTH_SHORT).show()
                         originalUsername = editUsername.text.toString()
                         originalEmail = editEmail.text.toString()
                         originalDob = editDob.text.toString()
                         toggleSaveIfChanged()
                     } else {
-                        Toast.makeText(this, "Gagal menyimpan", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, getString(R.string.msg_save_failed), Toast.LENGTH_LONG).show()
                         buttonSave.isEnabled = true
                     }
                 }
@@ -179,7 +179,7 @@ class EditProfileActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
                 runOnUiThread {
-                    Toast.makeText(this, "Terjadi kesalahan jaringan", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_network_error), Toast.LENGTH_SHORT).show()
                     buttonSave.isEnabled = true
                 }
             }

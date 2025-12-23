@@ -2,6 +2,7 @@
 
 <androidx.cardview.widget.CardView  xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="8dp"
@@ -18,7 +19,7 @@
         android:padding="12dp"
         android:gravity="center_vertical">
 
-        <com.google.android.material.imageview.ShapeableImageView
+        <ImageView
             android:id="@+id/profileImage"
             android:layout_width="50dp"
             android:layout_height="50dp"
@@ -26,8 +27,10 @@
             android:layout_centerVertical="true"
             android:src="@drawable/ic_person_placeholder"
             android:scaleType="centerCrop"
-            android:background="@color/light_purple"
-            app:shapeAppearanceOverlay="@style/CircleShape"/>
+            android:background="@drawable/bg_circle_light_purple"
+            android:clipToOutline="true"
+            android:outlineProvider="background"
+            />
 
         <!-- Username -->
         <TextView
@@ -36,17 +39,17 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="12dp"
-            android:text="violayc"
             android:textSize="16sp"
-            android:textColor="@android:color/black" />
+            android:textColor="@android:color/black"
+            tools:text="violayc" />
 
         <Button
             android:id="@+id/btnAddFriend"
             style="@style/AddFriendButtonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tambah teman"
-            android:drawableLeft="@drawable/ic_add"/>
+            android:text="@string/action_add_friend"
+            android:drawableStart="@drawable/ic_person_add"/>
 
 
     </LinearLayout>

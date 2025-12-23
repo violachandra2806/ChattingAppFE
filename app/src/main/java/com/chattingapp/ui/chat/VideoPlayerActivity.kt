@@ -88,7 +88,7 @@ class VideoPlayerActivity : AppCompatActivity() {
         // Check if video URL is valid
         if (videoUrl.isBlank()) {
             Log.e("VideoPlayer", "ERROR: videoUrl is empty!")
-            Toast.makeText(this, "Video URL is empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_video_url_empty), Toast.LENGTH_SHORT).show()
             finish()
             return
         }
@@ -166,7 +166,7 @@ class VideoPlayerActivity : AppCompatActivity() {
                 binding.videoView.start()
             } catch (e: Exception) {
                 Log.e("VideoPlayer", "Failed to play video: ${e.message}")
-                Toast.makeText(this, "Failed to play video", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_video_play_failed), Toast.LENGTH_SHORT).show()
             }
             false
         }

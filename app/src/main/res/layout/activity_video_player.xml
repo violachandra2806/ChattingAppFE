@@ -54,7 +54,7 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_back"
         android:tint="@android:color/white"
-        android:contentDescription="Back"
+        android:contentDescription="@string/cd_back_en"
         android:elevation="10dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -69,7 +69,7 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_translate"
         android:tint="@android:color/white"
-        android:contentDescription="Translate"
+        android:contentDescription="@string/cd_translate"
         android:elevation="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -117,7 +117,7 @@
                 android:id="@+id/tvCurrentTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0:00"
+                android:text="@string/placeholder_video_duration"
                 android:textColor="@android:color/white"
                 android:textSize="14sp" />
 
@@ -135,7 +135,7 @@
                 android:id="@+id/tvDuration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0:00"
+                android:text="@string/placeholder_video_duration"
                 android:textColor="@android:color/white"
                 android:textSize="14sp" />
         </LinearLayout>

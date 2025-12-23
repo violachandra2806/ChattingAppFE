@@ -30,7 +30,6 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var toggleConfirmPasswordVisibility: ImageView
     private lateinit var buttonRegister: Button
     private lateinit var alreadyHaveAccount: TextView
-    private lateinit var googleLogin: LinearLayout
 
     private var isPasswordVisible = false
     private var isConfirmPasswordVisible = false
@@ -49,7 +48,6 @@ class RegisterActivity : AppCompatActivity() {
         toggleConfirmPasswordVisibility = findViewById(R.id.toggleConfirmPasswordVisibility)
         buttonRegister = findViewById(R.id.buttonRegister)
         alreadyHaveAccount = findViewById(R.id.alreadyHaveAccount)
-        googleLogin = findViewById(R.id.buttonGoogle)
 
         // 🔹 Date picker
         editTextDateOfBirth.setOnClickListener { showDatePickerDialog() }
@@ -69,10 +67,6 @@ class RegisterActivity : AppCompatActivity() {
             finish()
         }
 
-        // 🔹 Google login (belum diimplementasi)
-        googleLogin.setOnClickListener {
-            Toast.makeText(this, "Google login belum diimplementasi", Toast.LENGTH_SHORT).show()
-        }
     }
 
     private fun setupPasswordToggle(
@@ -134,22 +128,22 @@ class RegisterActivity : AppCompatActivity() {
         val confirmPassword = editTextConfirmPassword.text.toString()
 
         if (email.isEmpty() || username.isEmpty() || dateOfBirth.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-            Toast.makeText(this, "Semua field harus diisi", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_all_fields_required), Toast.LENGTH_SHORT).show()
             return
         }
 
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            editTextEmail.error = "Format email tidak valid"
+            editTextEmail.error = getString(R.string.msg_email_invalid)
             return
         }
 
         if (password.length < 8) {
-            editTextPassword.error = "Password minimal 8 karakter"
+            editTextPassword.error = getString(R.string.msg_password_min_8)
             return
         }
 
         if (password != confirmPassword) {
-            editTextConfirmPassword.error = "Konfirmasi password tidak cocok"
+            editTextConfirmPassword.error = getString(R.string.msg_password_confirmation_mismatch)
             return
         }
 
@@ -175,23 +169,23 @@ class RegisterActivity : AppCompatActivity() {
                     val message = response.getString("message")
 
                     if (status == "success") {
-                        Toast.makeText(this, "Registrasi berhasil!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.msg_register_success), Toast.LENGTH_SHORT).show()
                         startActivity(Intent(this, LoginActivity::class.java))
                         finishAffinity()
                     } else {
-                        Toast.makeText(this, "Gagal: $message", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.msg_failed_with_reason, message), Toast.LENGTH_SHORT).show()
                     }
 
                 } catch (e: Exception) {
-                    Toast.makeText(this, "Kesalahan parsing data", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_parsing_error_data), Toast.LENGTH_SHORT).show()
                     e.printStackTrace()
                 }
             },
             { error ->
                 val errorMsg = error.networkResponse?.let {
                     String(it.data, Charsets.UTF_8)
-                } ?: error.message ?: "Error tidak diketahui"
-                Toast.makeText(this, "Gagal register: $errorMsg", Toast.LENGTH_LONG).show()
+                } ?: error.message ?: getString(R.string.msg_unknown_error)
+                Toast.makeText(this, getString(R.string.msg_register_failed, errorMsg), Toast.LENGTH_LONG).show()
             }
         )
 

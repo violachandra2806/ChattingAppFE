@@ -9,9 +9,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.widget.Button
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.cardview.widget.CardView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -20,10 +23,9 @@ import com.chattingapp.R
 import com.chattingapp.ui.friendlist.addfriend.AddFriendActivity
 import com.chattingapp.ui.friendlist.friendrequest.FriendRequestActivity
 import com.chattingapp.ui.chat.ChatRoomActivity
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.card.MaterialCardView
-import com.google.android.material.textfield.TextInputEditText
 import com.android.volley.Request
+import com.android.volley.RequestQueue
+import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.chattingapp.BuildConfig
@@ -37,12 +39,15 @@ class FriendListFragment : Fragment() {
     private var currentUserId: String = ""
 
     private var recyclerView: RecyclerView? = null
-    private var inputSearch: TextInputEditText? = null
+    private var inputSearch: EditText? = null
     private var sendButton: ImageView? = null
-    private var cardFriendRequest: MaterialCardView? = null
-    private var btnAddFriend: MaterialButton? = null
+    private var cardFriendRequest: CardView? = null
+    private var btnAddFriend: Button? = null
     private var badge: TextView? = null
     private var progressBar: View? = null
+
+    private var requestQueue: RequestQueue? = null
+    private val volleyTag = "FriendListFragment"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -76,9 +81,26 @@ class FriendListFragment : Fragment() {
             Log.e("FriendListFragment", "Error initializing views: ${e.message}")
         }
 
+        requestQueue = Volley.newRequestQueue(requireContext())
+
         setupRecyclerView()
         setupClickListeners()
         loadUserData()
+    }
+
+    override fun onDestroyView() {
+        requestQueue?.cancelAll(volleyTag)
+        requestQueue = null
+
+        recyclerView = null
+        inputSearch = null
+        sendButton = null
+        cardFriendRequest = null
+        btnAddFriend = null
+        badge = null
+        progressBar = null
+
+        super.onDestroyView()
     }
 
     override fun onResume() {
@@ -132,19 +154,20 @@ class FriendListFragment : Fragment() {
             loadFriendList(currentUserId)
             loadFriendRequestCount(currentUserId)
         } else {
-            Toast.makeText(requireContext(), "User belum login", Toast.LENGTH_SHORT).show()
+            context?.let { Toast.makeText(it, getString(R.string.msg_user_not_logged_in), Toast.LENGTH_SHORT).show() }
         }
     }
 
     private fun loadFriendList(userId: String) {
         val url = "${BuildConfig.BASE_URL}getuserfriends?user_id=$userId&limit=50&page=1"
-        val requestQueue = Volley.newRequestQueue(requireContext())
+        val queue = requestQueue ?: return
 
         val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET,
             url,
             null,
-            { response ->
+            Response.Listener { response ->
+                if (!isAdded) return@Listener
                 try {
                     val status = response.getString("status")
                     if (status == "success") {
@@ -165,25 +188,27 @@ class FriendListFragment : Fragment() {
                         friendList = friends
                         adapter.updateList(friendList)
                     } else {
-                        Toast.makeText(requireContext(), "Gagal memuat teman", Toast.LENGTH_SHORT).show()
+                        context?.let { Toast.makeText(it, getString(R.string.msg_failed_load_friends), Toast.LENGTH_SHORT).show() }
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    Toast.makeText(requireContext(), "Parsing error", Toast.LENGTH_SHORT).show()
+                    context?.let { Toast.makeText(it, getString(R.string.msg_parsing_error_data), Toast.LENGTH_SHORT).show() }
                 }
             },
-            { error ->
+            Response.ErrorListener { error ->
                 error.printStackTrace()
-                Toast.makeText(requireContext(), "Gagal terhubung ke server", Toast.LENGTH_SHORT).show()
+                val ctx = context ?: return@ErrorListener
+                Toast.makeText(ctx, getString(R.string.msg_server_connection_failed), Toast.LENGTH_SHORT).show()
             }
         )
 
-        requestQueue.add(jsonObjectRequest)
+        jsonObjectRequest.tag = volleyTag
+        queue.add(jsonObjectRequest)
     }
 
     private fun createOrGetChatRoom(friend: Friend) {
         val url = "${BuildConfig.BASE_URL}createorgetchatroom"
-        val requestQueue = Volley.newRequestQueue(requireContext())
+        val queue = requestQueue ?: return
 
         val jsonBody = JSONObject().apply {
             put("user_id_first", currentUserId)
@@ -194,7 +219,8 @@ class FriendListFragment : Fragment() {
             Request.Method.POST,
             url,
             jsonBody,
-            { response ->
+            Response.Listener { response ->
+                if (!isAdded) return@Listener
                 try {
                     if (response.getString("status") == "success") {
                         val data = response.getJSONObject("data")
@@ -210,37 +236,42 @@ class FriendListFragment : Fragment() {
                         }
                         startActivity(intent)
                     } else {
-                        Toast.makeText(
-                            requireContext(),
-                            "Gagal membuka chat: ${response.optString("message")}",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        context?.let {
+                            Toast.makeText(
+                                it,
+                                getString(R.string.msg_failed_with_reason, response.optString("message")),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 } catch (e: Exception) {
-                    Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    context?.let { Toast.makeText(it, getString(R.string.msg_error_with_reason, e.message ?: ""), Toast.LENGTH_SHORT).show() }
                 }
             },
-            { error ->
+            Response.ErrorListener { error ->
+                val ctx = context ?: return@ErrorListener
                 Toast.makeText(
-                    requireContext(),
-                    "Gagal terhubung: ${error.message}",
+                    ctx,
+                    getString(R.string.msg_server_connection_failed),
                     Toast.LENGTH_SHORT
                 ).show()
             }
         )
 
-        requestQueue.add(request)
+        request.tag = volleyTag
+        queue.add(request)
     }
 
     private fun loadFriendRequestCount(userId: String) {
         val url = "${BuildConfig.BASE_URL}getfriendrequests?receiver=$userId&limit=1&page=1"
-        val requestQueue = Volley.newRequestQueue(requireContext())
+        val queue = requestQueue ?: return
 
         val jsonObjectRequest = JsonObjectRequest(
             Request.Method.GET,
             url,
             null,
-            { response ->
+            Response.Listener { response ->
+                if (!isAdded) return@Listener
                 try {
                     if (response.getString("status") == "success") {
                         val count = response.optInt("count", 0)
@@ -251,12 +282,13 @@ class FriendListFragment : Fragment() {
                     e.printStackTrace()
                 }
             },
-            { error ->
+            Response.ErrorListener { error ->
                 error.printStackTrace()
             }
         )
 
-        requestQueue.add(jsonObjectRequest)
+        jsonObjectRequest.tag = volleyTag
+        queue.add(jsonObjectRequest)
     }
 
     private fun performSearch() {
@@ -267,7 +299,7 @@ class FriendListFragment : Fragment() {
             if (filtered.isNotEmpty()) {
                 adapter.updateList(filtered)
             } else {
-                Toast.makeText(requireContext(), "Tidak ditemukan", Toast.LENGTH_SHORT).show()
+                context?.let { Toast.makeText(it, getString(R.string.msg_not_found), Toast.LENGTH_SHORT).show() }
                 adapter.updateList(emptyList())
             }
         } else {

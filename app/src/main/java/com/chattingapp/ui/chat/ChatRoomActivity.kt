@@ -19,7 +19,7 @@ import com.chattingapp.R
 import com.chattingapp.databinding.ActivityChatRoomBinding
 import com.chattingapp.ui.chat.adapter.MessageAdapter
 import com.chattingapp.utils.SupabaseClient
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import androidx.appcompat.app.AlertDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -248,23 +248,26 @@ class ChatRoomActivity : AppCompatActivity() {
             if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
                 startVideoRecording()
             } else {
-                Toast.makeText(this, "Camera and microphone permissions are required", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_permissions_camera_mic_required), Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun showVideoSourceDialog() {
-        val items = arrayOf("Record Video", "Choose from Gallery")
+        val items = arrayOf(
+            getString(R.string.dialog_record_video),
+            getString(R.string.dialog_choose_from_gallery)
+        )
 
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Select Video Source")
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.dialog_select_video_source))
             .setItems(items) { dialog, which ->
                 when (which) {
                     0 -> startVideoRecording()
                     1 -> pickVideoFromGallery()
                 }
             }
-            .setNegativeButton("Cancel") { dialog, _ ->
+            .setNegativeButton(getString(R.string.action_cancel)) { dialog, _ ->
                 dialog.dismiss()
             }
             .show()
@@ -438,7 +441,7 @@ class ChatRoomActivity : AppCompatActivity() {
 
     private fun uploadMediaFromUri(uri: Uri) {
         runOnUiThread {
-            Toast.makeText(this, "Uploading media...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_uploading_media), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -455,9 +458,10 @@ class ChatRoomActivity : AppCompatActivity() {
                     override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
                         android.util.Log.e("Transcribe", "❌ Failed: ${e.message}")
                         lifecycleScope.launch(Dispatchers.Main) {
+                            val reason = e.message ?: getString(R.string.msg_unknown_error)
                             Toast.makeText(
                                 this@ChatRoomActivity,
-                                "Gagal: ${e.message}",
+                                getString(R.string.msg_failed_with_reason, reason),
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
@@ -469,7 +473,7 @@ class ChatRoomActivity : AppCompatActivity() {
                             lifecycleScope.launch(Dispatchers.Main) {
                                 Toast.makeText(
                                     this@ChatRoomActivity,
-                                    "Transkripsi selesai! Tunggu update...",
+                                    getString(R.string.msg_transcription_done_wait_update),
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -480,7 +484,7 @@ class ChatRoomActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(
                         this@ChatRoomActivity,
-                        "Memproses transkripsi...",
+                        getString(R.string.msg_processing_transcription),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -550,8 +554,8 @@ class ChatRoomActivity : AppCompatActivity() {
                 yesterday.add(Calendar.DAY_OF_YEAR, -1)
 
                 return when {
-                    isSameDay(calendar, today) -> "Hari Ini"
-                    isSameDay(calendar, yesterday) -> "Kemarin"
+                    isSameDay(calendar, today) -> getString(R.string.label_today)
+                    isSameDay(calendar, yesterday) -> getString(R.string.label_yesterday)
                     else -> output.format(date)
                 }
             }
@@ -572,8 +576,8 @@ class ChatRoomActivity : AppCompatActivity() {
                 yesterday.add(Calendar.DAY_OF_YEAR, -1)
 
                 return when {
-                    isSameDay(calendar, today) -> "Hari Ini"
-                    isSameDay(calendar, yesterday) -> "Kemarin"
+                    isSameDay(calendar, today) -> getString(R.string.label_today)
+                    isSameDay(calendar, yesterday) -> getString(R.string.label_yesterday)
                     else -> output.format(date)
                 }
             }
@@ -675,7 +679,12 @@ class ChatRoomActivity : AppCompatActivity() {
                 e.printStackTrace()
                 android.util.Log.e("ChatRealtime", "❌ Subscription error: ${e.message}", e)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@ChatRoomActivity, "Realtime error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    val message = e.message ?: getString(R.string.msg_unknown_error)
+                    Toast.makeText(
+                        this@ChatRoomActivity,
+                        getString(R.string.msg_realtime_error, message),
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }

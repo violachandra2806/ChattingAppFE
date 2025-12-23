@@ -63,28 +63,30 @@ class VerificationCodeActivity : AppCompatActivity() {
         val cpass = confirmPassword.text.toString()
 
         if (code.length != 4) {
-            Toast.makeText(this, "Masukkan 4 kode verifikasi", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_verification_code_required), Toast.LENGTH_SHORT).show()
             return
         }
 
         if (npass.length < 8 || !npass.matches(Regex("(?=.*[0-9])(?=.*[A-Za-z]).{8,}"))) {
-            Toast.makeText(this, "Password harus >=8 karakter dan mengandung huruf & angka", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.msg_password_policy), Toast.LENGTH_LONG).show()
             return
         }
 
         if (npass != cpass) {
-            Toast.makeText(this, "Konfirmasi password tidak sama", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_password_confirmation_mismatch), Toast.LENGTH_SHORT).show()
             return
         }
 
         // send to /chattingapp/verificatepassword
         Thread {
             try {
-                val url = URL("${BuildConfig.BASE_URL}chattingapp/verificatepassword")
+                val url = URL("${BuildConfig.BASE_URL}verificatepassword")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
                 conn.doOutput = true
+                conn.connectTimeout = 15_000
+                conn.readTimeout = 15_000
 
                 val payload = JSONObject()
                 if (userId != null) payload.put("user_id", userId) else payload.put("user_id", JSONObject.NULL)
@@ -95,11 +97,14 @@ class VerificationCodeActivity : AppCompatActivity() {
                 conn.outputStream.use { os -> OutputStreamWriter(os, "UTF-8").use { it.write(payload.toString()) } }
 
                 val codeResp = conn.responseCode
-                val resp = conn.inputStream.bufferedReader().use { it.readText() }
+                val resp = (if (codeResp in 200..299) conn.inputStream else conn.errorStream)
+                    ?.bufferedReader()
+                    ?.use { it.readText() }
+                    .orEmpty()
 
                 runOnUiThread {
                     if (codeResp in 200..299) {
-                        Toast.makeText(this, "Password berhasil diubah", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.msg_password_changed), Toast.LENGTH_SHORT).show()
                             try {
                                 val respJson = JSONObject(resp)
                                 val status = respJson.optString("status", "")
@@ -113,13 +118,13 @@ class VerificationCodeActivity : AppCompatActivity() {
                         startActivity(i)
                         finish()
                     } else {
-                        Toast.makeText(this, "Verifikasi gagal", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, getString(R.string.msg_verification_failed), Toast.LENGTH_LONG).show()
                     }
                 }
 
             } catch (e: Exception) {
                 e.printStackTrace()
-                runOnUiThread { Toast.makeText(this, "Terjadi kesalahan jaringan", Toast.LENGTH_SHORT).show() }
+                runOnUiThread { Toast.makeText(this, getString(R.string.msg_network_error), Toast.LENGTH_SHORT).show() }
             }
         }.start()
     }
@@ -130,11 +135,13 @@ class VerificationCodeActivity : AppCompatActivity() {
         // send same payload as ForgotPasswordActivity
         Thread {
             try {
-                val url = URL("${BuildConfig.BASE_URL}chattingapp/sendemail")
+                val url = URL("${BuildConfig.BASE_URL}sendemail")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
                 conn.doOutput = true
+                conn.connectTimeout = 15_000
+                conn.readTimeout = 15_000
 
                 val payload = JSONObject()
                 payload.put("user_email", email)
@@ -142,11 +149,13 @@ class VerificationCodeActivity : AppCompatActivity() {
                 conn.outputStream.use { os -> OutputStreamWriter(os, "UTF-8").use { it.write(payload.toString()) } }
 
                 val codeResp = conn.responseCode
-                conn.inputStream.bufferedReader().use { it.readText() }
+                (if (codeResp in 200..299) conn.inputStream else conn.errorStream)
+                    ?.bufferedReader()
+                    ?.use { it.readText() }
 
                 runOnUiThread {
                     if (codeResp in 200..299) {
-                        Toast.makeText(this, "Email terkirim ulang", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.msg_email_resent), Toast.LENGTH_SHORT).show()
                             try {
                                 // response has data array with send_result and verification_code_set
                             } catch (e: Exception) {
@@ -154,7 +163,7 @@ class VerificationCodeActivity : AppCompatActivity() {
                             }
                         startResendCountdown()
                     } else {
-                        Toast.makeText(this, "Gagal mengirim ulang", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, getString(R.string.msg_resend_failed), Toast.LENGTH_LONG).show()
                         buttonResend.isEnabled = true
                     }
                 }
@@ -162,7 +171,7 @@ class VerificationCodeActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 e.printStackTrace()
                 runOnUiThread {
-                    Toast.makeText(this, "Terjadi kesalahan jaringan", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_network_error), Toast.LENGTH_SHORT).show()
                     buttonResend.isEnabled = true
                 }
             }
@@ -178,11 +187,11 @@ class VerificationCodeActivity : AppCompatActivity() {
         resendTimer = object : CountDownTimer(totalMs, 1000L) {
             override fun onTick(millisUntilFinished: Long) {
                 val seconds = millisUntilFinished / 1000L
-                buttonResend.text = "Resend (${seconds}s)"
+                buttonResend.text = getString(R.string.resend_with_seconds, seconds)
             }
 
             override fun onFinish() {
-                buttonResend.text = "Resend"
+                buttonResend.text = getString(R.string.resend)
                 buttonResend.isEnabled = true
             }
         }

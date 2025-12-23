@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginVertical="4dp"
@@ -12,7 +13,7 @@
         android:layout_height="wrap_content"
         android:padding="12dp">
 
-        <com.google.android.material.imageview.ShapeableImageView
+        <ImageView
             android:id="@+id/profileImage"
             android:layout_width="50dp"
             android:layout_height="50dp"
@@ -20,8 +21,10 @@
             android:layout_centerVertical="true"
             android:src="@drawable/ic_person_placeholder"
             android:scaleType="centerCrop"
-            android:background="@color/light_purple"
-            app:shapeAppearanceOverlay="@style/CircleShape"/>
+            android:background="@drawable/bg_circle_light_purple"
+            android:clipToOutline="true"
+            android:outlineProvider="background"
+            />
 
         <TextView
             android:id="@+id/tvUsername"
@@ -31,11 +34,11 @@
             android:layout_toStartOf="@id/tvTime"
             android:layout_marginStart="12dp"
             android:layout_marginEnd="8dp"
-            android:text="Username"
             android:textStyle="bold"
             android:textSize="16sp"
             android:maxLines="1"
-            android:ellipsize="end"/>
+            android:ellipsize="end"
+            tools:text="@string/hint_username_simple"/>
 
         <TextView
             android:id="@+id/tvLastMessage"
@@ -47,21 +50,21 @@
             android:layout_marginStart="12dp"
             android:layout_marginTop="4dp"
             android:layout_marginEnd="8dp"
-            android:text="Last message preview"
             android:textSize="14sp"
             android:textColor="#888"
             android:maxLines="1"
-            android:ellipsize="end"/>
+            android:ellipsize="end"
+            tools:text="Last message preview"/>
 
         <TextView
             android:id="@+id/tvTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:text="19:32"
             android:textColor="#888"
             android:textSize="12sp"
-            android:layout_marginBottom="5dp"/>
+            android:layout_marginBottom="5dp"
+            tools:text="19:32"/>
 
         <TextView
             android:id="@+id/tvUnreadCount"
@@ -71,11 +74,12 @@
             android:layout_below="@id/tvTime"
             android:layout_marginTop="4dp"
             android:background="@drawable/circle_purple"
-            android:text="3"
             android:textColor="#FFFFFF"
             android:textSize="12sp"
             android:gravity="center"
-            android:visibility="gone"/>
+            android:visibility="gone"
+            tools:text="3"
+            tools:visibility="visible"/>
 
     </RelativeLayout>
 

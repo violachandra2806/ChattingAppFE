@@ -28,22 +28,17 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun setupBottomNavigation() {
-        binding.bottomNavigation.setOnNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.navigation_dashboard -> {
-                    loadFragment(DashboardFragment())
-                    true
-                }
-                R.id.navigation_friends -> {
-                    loadFragment(FriendListFragment())
-                    true
-                }
-                R.id.navigation_settings -> {
-                    loadFragment(SettingsFragment())
-                    true
-                }
-                else -> false
+        binding.bottomNavigation.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.navigation_dashboard -> loadFragment(DashboardFragment())
+                R.id.navigation_friends -> loadFragment(FriendListFragment())
+                R.id.navigation_settings -> loadFragment(SettingsFragment())
             }
+        }
+
+        // Default selected tab
+        if (binding.bottomNavigation.checkedRadioButtonId == -1) {
+            binding.bottomNavigation.check(R.id.navigation_dashboard)
         }
     }
 

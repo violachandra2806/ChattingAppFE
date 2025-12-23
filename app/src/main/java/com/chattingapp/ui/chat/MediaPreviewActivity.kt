@@ -10,6 +10,7 @@ import android.util.Log
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.chattingapp.R
 import com.chattingapp.databinding.ActivityMediaBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -268,7 +269,12 @@ class MediaPreviewActivity : AppCompatActivity() {
             }
         }
 
-        binding.tvVideoInfo.text = "Resolution: $resolution • ${frameRate}fps • ${String.format("%.1f", fileSize / (1024.0 * 1024.0))}MB"
+        binding.tvVideoInfo.text = getString(
+            R.string.label_video_info,
+            resolution,
+            frameRate,
+            String.format("%.1f", fileSize / (1024.0 * 1024.0))
+        )
         binding.btnSend.visibility = android.view.View.VISIBLE
         binding.btnTranslateASL.visibility = android.view.View.VISIBLE
     }
@@ -295,8 +301,8 @@ class MediaPreviewActivity : AppCompatActivity() {
                     } else {
                         binding.progressBar.visibility = android.view.View.GONE
                         showErrorDialog(
-                            "Upload Failed",
-                            "Failed to upload video for translation",
+                            getString(R.string.dialog_upload_failed),
+                            getString(R.string.msg_failed_upload_video_translation),
                             retryAction = { uploadVideoForTranslation() }
                         )
                     }
@@ -305,9 +311,10 @@ class MediaPreviewActivity : AppCompatActivity() {
                 Log.e("TRANSLATE_UPLOAD", "Upload error: ${e.message}", e)
                 withContext(Dispatchers.Main) {
                     binding.progressBar.visibility = android.view.View.GONE
+                    val message = e.message ?: getString(R.string.msg_unknown_error)
                     showErrorDialog(
-                        "Upload Error",
-                        "Error: ${e.message ?: "Unknown error"}",
+                        getString(R.string.dialog_upload_error),
+                        getString(R.string.msg_error_with_reason, message),
                         retryAction = { uploadVideoForTranslation() }
                     )
                 }
@@ -470,24 +477,25 @@ class MediaPreviewActivity : AppCompatActivity() {
                                 val error = jsonResponse.optString("error", "Translation failed")
                                 Log.e("TRANSLATE_ASL", "❌ Translation failed: $error")
                                 showErrorDialog(
-                                    "Translation Failed",
+                                    getString(R.string.dialog_translation_failed),
                                     error,
                                     retryAction = { translateASL() }
                                 )
                             }
                         } catch (e: Exception) {
                             Log.e("TRANSLATE_ASL", "❌ JSON parsing error: ${e.message}", e)
+                            val reason = e.message ?: getString(R.string.msg_unknown_error)
                             showErrorDialog(
-                                "Translation Error",
-                                "Failed to parse response: ${e.message}",
+                                getString(R.string.dialog_translation_error),
+                                getString(R.string.msg_failed_parse_response_with_reason, reason),
                                 retryAction = { translateASL() }
                             )
                         }
                     } else {
                         Log.e("TRANSLATE_ASL", "❌ Empty response body")
                         showErrorDialog(
-                            "Translation Error",
-                            "Empty response from server",
+                            getString(R.string.dialog_translation_error),
+                            getString(R.string.msg_empty_response_from_server),
                             retryAction = { translateASL() }
                         )
                     }
@@ -496,9 +504,10 @@ class MediaPreviewActivity : AppCompatActivity() {
                 Log.e("TRANSLATE_ASL", "❌ Network error: ${e.message}", e)
                 withContext(Dispatchers.Main) {
                     binding.progressBar.visibility = android.view.View.GONE
+                    val reason = e.message ?: getString(R.string.msg_unknown_error)
                     showErrorDialog(
-                        "Network Error",
-                        "Failed to connect: ${e.message}",
+                        getString(R.string.msg_network_error_en),
+                        getString(R.string.msg_failed_to_connect_with_reason, reason),
                         retryAction = { translateASL() }
                     )
                 }
@@ -558,8 +567,8 @@ class MediaPreviewActivity : AppCompatActivity() {
                         withContext(Dispatchers.Main) {
                             binding.progressBar.visibility = android.view.View.GONE
                             showErrorDialog(
-                                "Upload Failed",
-                                "Failed to upload video",
+                                getString(R.string.dialog_upload_failed),
+                                getString(R.string.msg_failed_upload_video),
                                 retryAction = { sendVideoNote() }
                             )
                         }
@@ -655,7 +664,7 @@ class MediaPreviewActivity : AppCompatActivity() {
                                                     Log.i("SEND_VIDEO_NOTE", "✅ Translate_yn updated successfully")
                                                     android.widget.Toast.makeText(
                                                         this@MediaPreviewActivity,
-                                                        "Video sent and updates completed successfully",
+                                                        getString(R.string.msg_video_sent_updates_success),
                                                         android.widget.Toast.LENGTH_SHORT
                                                     ).show()
 
@@ -683,24 +692,25 @@ class MediaPreviewActivity : AppCompatActivity() {
                                     val error = jsonResponse.optString("error", "Failed to send video")
                                     Log.e("SEND_VIDEO_NOTE", "❌ Send failed: $error")
                                     showErrorDialog(
-                                        "Send Failed",
+                                        getString(R.string.dialog_send_failed),
                                         error,
                                         retryAction = { sendVideoNote() }
                                     )
                                 }
                             } catch (e: Exception) {
                                 Log.e("SEND_VIDEO_NOTE", "❌ JSON parsing error: ${e.message}", e)
+                                val reason = e.message ?: getString(R.string.msg_unknown_error)
                                 showErrorDialog(
-                                    "Send Error",
-                                    "Failed to parse response: ${e.message}",
+                                    getString(R.string.dialog_send_error),
+                                    getString(R.string.msg_failed_parse_response_with_reason, reason),
                                     retryAction = { sendVideoNote() }
                                 )
                             }
                         } else {
                             Log.e("SEND_VIDEO_NOTE", "❌ Empty response body")
                             showErrorDialog(
-                                "Send Error",
-                                "Empty response from server",
+                                getString(R.string.dialog_send_error),
+                                getString(R.string.msg_empty_response_from_server),
                                 retryAction = { sendVideoNote() }
                             )
                         }
@@ -709,8 +719,8 @@ class MediaPreviewActivity : AppCompatActivity() {
                     withContext(Dispatchers.Main) {
                         binding.progressBar.visibility = android.view.View.GONE
                         showErrorDialog(
-                            "Send Failed",
-                            "No video URL available",
+                            getString(R.string.dialog_send_failed),
+                            getString(R.string.msg_video_url_not_available),
                             retryAction = { sendVideoNote() }
                         )
                     }
@@ -719,9 +729,10 @@ class MediaPreviewActivity : AppCompatActivity() {
                 Log.e("SEND_VIDEO_NOTE", "❌ Network error: ${e.message}", e)
                 withContext(Dispatchers.Main) {
                     binding.progressBar.visibility = android.view.View.GONE
+                    val reason = e.message ?: getString(R.string.msg_unknown_error)
                     showErrorDialog(
-                        "Network Error",
-                        "Failed to connect: ${e.message}",
+                        getString(R.string.msg_network_error_en),
+                        getString(R.string.msg_failed_to_connect_with_reason, reason),
                         retryAction = { sendVideoNote() }
                     )
                 }
@@ -731,14 +742,14 @@ class MediaPreviewActivity : AppCompatActivity() {
 
     private fun showUpdateTranslateYnErrorDialog() {
         AlertDialog.Builder(this)
-            .setTitle("Update Failed")
-            .setMessage("Message ID updated but failed to update translate status. Do you want to retry updating translate status?")
+            .setTitle(getString(R.string.dialog_update_failed))
+            .setMessage(getString(R.string.dialog_update_failed_message_status))
             .setCancelable(false)
-            .setPositiveButton("Retry Update") { _, _ ->
+            .setPositiveButton(getString(R.string.action_retry_update)) { _, _ ->
                 // Only retry the translate_yn update
                 retryUpdateTranslateYnForVideoNote()
             }
-            .setNegativeButton("Cancel") { _, _ ->
+            .setNegativeButton(getString(R.string.action_cancel)) { _, _ ->
                 // User chooses to proceed without translate_yn update
                 val resultIntent = Intent()
                 resultIntent.putExtra("video_sent", true)
@@ -765,7 +776,7 @@ class MediaPreviewActivity : AppCompatActivity() {
                     Log.i("RETRY_TRANSLATE_YN", "✅ Translate_yn updated successfully")
                     android.widget.Toast.makeText(
                         this@MediaPreviewActivity,
-                        "Translate status updated successfully",
+                        getString(R.string.msg_translate_status_updated_success),
                         android.widget.Toast.LENGTH_SHORT
                     ).show()
 
@@ -784,14 +795,14 @@ class MediaPreviewActivity : AppCompatActivity() {
 
     private fun showUpdateMessageIdErrorDialog() {
         AlertDialog.Builder(this)
-            .setTitle("Update Failed")
-            .setMessage("Video sent but failed to update message ID for translation. Do you want to retry updating?")
+            .setTitle(getString(R.string.dialog_update_failed))
+            .setMessage(getString(R.string.dialog_update_failed_message_video))
             .setCancelable(false)
-            .setPositiveButton("Retry Update") { _, _ ->
+            .setPositiveButton(getString(R.string.action_retry_update)) { _, _ ->
                 // Only retry the update, not the entire send
                 retryUpdateMessageIdForTranslation()
             }
-            .setNegativeButton("Cancel") { _, _ ->
+            .setNegativeButton(getString(R.string.action_cancel)) { _, _ ->
                 // User chooses to proceed without update
                 val resultIntent = Intent()
                 resultIntent.putExtra("video_sent", true)
@@ -1017,10 +1028,10 @@ class MediaPreviewActivity : AppCompatActivity() {
             .setTitle(title)
             .setMessage(message)
             .setCancelable(false)
-            .setPositiveButton("Retry") { _, _ ->
+            .setPositiveButton(getString(R.string.action_retry)) { _, _ ->
                 retryAction?.invoke()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(getString(R.string.action_cancel), null)
             .show()
     }
 

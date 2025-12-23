@@ -1,37 +1,179 @@
 <resources>
 
-
-    <string name="title_home">Chatting App</string>
-    <string name="title_dashboard">Chatting App</string>
-    <string name="title_notifications">Chatting App</string>
-
-    // Start App
-    <string name="app_name">Chatting App</string>
-    <string name="my_app">MyApp</string>
+    <!-- App -->
+    <string name="app_name">Aplikasi Chat</string>
+    <string name="app_title_welcome">Selamat Datang</string>
     <string name="title_chat">Pesan</string>
     <string name="title_friend">Teman</string>
     <string name="title_setting">Pengaturan</string>
-    <string name="App_Description">Aplikasi chat untuk pengguna tuli, bisu, dan pendengar dengan teks, terjemahan video, dan transkripsi suara.</string>
-    <string name="app_Login_button">Masuk</string>
-    <string name="app_Register_button">Daftar</string>
-    <string name="app_title_welcome">Welcome to MyApp</string>
+    <string name="app_description">Aplikasi chat untuk pengguna tuli, bisu, dan pendengar dengan teks, terjemahan video, dan transkripsi suara.</string>
 
-    // Login App
+    <!-- Common actions/labels -->
+    <string name="action_search">Cari</string>
+    <string name="action_add_friend">Tambah Teman</string>
+    <string name="action_transcript">Transkrip</string>
+    <string name="label_chat_header">Obrolan</string>
+    <string name="label_friend_requests">Permintaan teman</string>
+    <string name="label_friends_list">Daftar Teman</string>
+    <string name="label_no_chat_rooms">Tidak ada ruang chat tersedia</string>
+
+    <!-- Hints -->
+    <string name="hint_search">Cari</string>
+    <string name="hint_search_friend_username">Cari nama pengguna teman...</string>
+    <string name="hint_type_username">Ketik nama pengguna...</string>
+    <string name="hint_username_simple">Nama Pengguna</string>
+    <string name="hint_email_simple">Email</string>
+    <string name="hint_dob_yyyy_mm_dd">Tanggal Lahir (YYYY-MM-DD)</string>
+    <string name="hint_password_simple">Kata Sandi</string>
+    <string name="hint_message">Ketik pesan...</string>
+
+    <!-- Login/Register -->
+    <string name="app_login_button">Masuk</string>
+    <string name="app_register_button">Daftar</string>
+    <string name="label_no_account">Belum punya akun?</string>
+    <string name="action_register_now">Daftar sekarang</string>
     <string name="forget_password_button">Lupa Kata Sandi?</string>
     <string name="hint_password">Kata Sandi</string>
     <string name="hint_email_or_username">Alamat Email/Nama Pengguna</string>
-    <string name="toggle_password_visibility">Toggle password visibility</string>
-
-    // Register
+    <string name="toggle_password_visibility">Tampilkan/Sembunyikan kata sandi</string>
     <string name="hint_email">Alamat Email</string>
     <string name="hint_username">Nama Pengguna</string>
     <string name="hint_dob">Tanggal Lahir</string>
-    <string name="hint_confirm_pass">konfirmasi Kata Sandi</string>
+    <string name="hint_confirm_pass">Konfirmasi Kata Sandi</string>
     <string name="hint_other_methods">Atau coba metode lain</string>
-    <string name="hint_login_google">Masuk dengan Google</string>
-    <string name="image_google_logo">Google Logo</string>
     <string name="hint_already_have_account">Sudah punya akun?</string>
 
-    <string name="icon_back">Back Icon</string>
+    <!-- Forgot password / verification -->
+    <string name="title_change_password">Ubah Kata Sandi</string>
+    <string name="forgot_password_instruction">Silakan masukkan email Anda untuk mereset kata sandi. Kami akan mengirimkan instruksi ke email Anda, jadi jangan lupa untuk memeriksanya.</string>
+    <string name="action_send_verification_code">Kirim Kode Verifikasi</string>
+    <string name="title_verify_code">Verifikasi Kode</string>
+    <string name="verification_email_sent">Email terkirim. Masukkan 4 kode verifikasi yang Anda terima.</string>
+
+    <!-- Profile -->
+    <string name="title_edit_profile">Edit Profil</string>
+    <string name="action_save_changes">Simpan Perubahan</string>
+    <string name="action_change_password">Ubah kata sandi</string>
+
+    <!-- Media / placeholders -->
+    <string name="placeholder_duration">00:00</string>
+    <string name="placeholder_video_duration">0:00</string>
+    <string name="label_no_video_selected">Tidak ada video dipilih</string>
+    <string name="label_please_wait">Mohon tunggu...</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_back">Kembali</string>
+    <string name="cd_back_en">Kembali</string>
+    <string name="cd_play">Putar</string>
+    <string name="cd_play_video">Putar video</string>
+    <string name="cd_video_thumbnail">Thumbnail video</string>
+    <string name="cd_translate">Terjemahkan</string>
+    <string name="cd_video">Video</string>
+    <string name="cd_send">Kirim</string>
+    <string name="cd_record">Rekam</string>
+
+    <!-- Toasts / messages (consolidated) -->
+    <string name="msg_network_error">Terjadi kesalahan jaringan</string>
+    <string name="msg_server_connection_failed">Gagal terhubung ke server</string>
+    <string name="msg_user_not_logged_in">Pengguna belum login</string>
+    <string name="msg_email_required">Masukkan email Anda</string>
+    <string name="msg_email_invalid">Format email tidak valid</string>
+    <string name="msg_email_sent">Email terkirim</string>
+    <string name="msg_email_send_failed">Gagal mengirim email</string>
+    <string name="msg_login_fields_required">Email dan kata sandi harus diisi</string>
+    <string name="msg_login_success">Berhasil masuk!</string>
+    <string name="msg_generic_error">Terjadi kesalahan</string>
+    <string name="msg_unknown_error">Kesalahan tidak diketahui</string>
+    <string name="msg_login_failed">Gagal masuk: %1$s</string>
+    <string name="msg_all_fields_required">Semua kolom harus diisi</string>
+    <string name="msg_register_success">Pendaftaran berhasil!</string>
+    <string name="msg_failed_with_reason">Gagal: %1$s</string>
+    <string name="msg_parsing_error_data">Kesalahan saat memproses data</string>
+    <string name="msg_register_failed">Gagal mendaftar: %1$s</string>
+    <string name="msg_user_id_not_found">ID pengguna tidak ditemukan</string>
+    <string name="msg_failed_fetch_data">Gagal mengambil data</string>
+    <string name="msg_network_error_en">Terjadi kesalahan jaringan</string>
+    <string name="msg_friend_request_accepted">Permintaan pertemanan diterima!</string>
+    <string name="msg_friend_request_accept_failed">Gagal menerima permintaan</string>
+    <string name="msg_friend_request_rejected">Permintaan pertemanan ditolak</string>
+    <string name="msg_friend_request_reject_failed">Gagal menolak permintaan</string>
+    <string name="msg_login_session_missing">Sesi masuk tidak ditemukan</string>
+    <string name="msg_server_error_with_code">Kesalahan server (%1$d)</string>
+    <string name="msg_search_friend_failed">Gagal mencari teman: %1$s</string>
+    <string name="msg_no_results_found">Tidak ada hasil ditemukan</string>
+    <string name="msg_no_results_for">Tidak ada hasil untuk "%1$s"</string>
+    <string name="msg_found_results_for">Ditemukan %1$d hasil untuk "%2$s"</string>
+    <string name="msg_friend_request_sent">Permintaan pertemanan dikirim!</string>
+    <string name="msg_friend_request_send_failed">Gagal mengirim permintaan</string>
+    <string name="msg_verification_code_required">Masukkan 4 kode verifikasi</string>
+    <string name="msg_password_policy">Kata sandi harus &gt;=8 karakter dan mengandung huruf &amp; angka</string>
+    <string name="msg_password_min_8">Kata sandi minimal 8 karakter</string>
+    <string name="msg_password_confirmation_mismatch">Konfirmasi kata sandi tidak sama</string>
+    <string name="msg_password_changed">Kata sandi berhasil diubah</string>
+    <string name="msg_verification_failed">Verifikasi gagal</string>
+    <string name="msg_email_resent">Email terkirim ulang</string>
+    <string name="msg_resend_failed">Gagal mengirim ulang</string>
+    <string name="msg_failed_load_user_data">Gagal memuat data pengguna</string>
+    <string name="msg_profile_updated">Profil berhasil diperbarui</string>
+    <string name="msg_save_failed">Gagal menyimpan</string>
+    <string name="msg_video_url_empty">URL video kosong</string>
+    <string name="msg_video_play_failed">Gagal memutar video</string>
+    <string name="msg_permissions_camera_mic_required">Izin kamera dan mikrofon diperlukan</string>
+    <string name="dialog_select_video_source">Pilih Sumber Video</string>
+    <string name="msg_uploading_media">Mengunggah media...</string>
+    <string name="msg_realtime_error">Kesalahan waktu nyata: %1$s</string>
+    <string name="msg_audio_permission_required_recording">Izin audio diperlukan untuk merekam</string>
+    <string name="msg_audio_permission_required_recording_long">Izin audio diperlukan untuk merekam</string>
+    <string name="msg_camera_permission_required">Izin kamera diperlukan</string>
+    <string name="msg_camera_start_failed">Gagal memulai kamera: %1$s</string>
+    <string name="msg_recording_failed">Gagal merekam!</string>
+    <string name="msg_not_found">Tidak ditemukan</string>
+    <string name="msg_error_with_reason">Kesalahan: %1$s</string>
+    <string name="msg_failed_load_friends">Gagal memuat teman</string>
+    <string name="dialog_update_failed">Pembaruan Gagal</string>
+    <string name="dialog_update_failed_message_status">ID pesan sudah diperbarui, tetapi gagal memperbarui status terjemahan. Ingin coba lagi?</string>
+    <string name="dialog_update_failed_message_video">Video berhasil dikirim, tetapi gagal memperbarui ID pesan untuk terjemahan. Ingin coba lagi?</string>
+    <string name="dialog_upload_failed">Unggah Gagal</string>
+    <string name="dialog_upload_error">Kesalahan Unggah</string>
+    <string name="dialog_translation_failed">Terjemahan Gagal</string>
+    <string name="dialog_translation_error">Kesalahan Terjemahan</string>
+    <string name="dialog_send_failed">Gagal Mengirim</string>
+    <string name="dialog_send_error">Kesalahan Pengiriman</string>
+
+    <!-- Misc -->
+    <string name="resend">Kirim ulang</string>
+    <string name="resend_with_seconds">Kirim ulang (%1$ds)</string>
+    <string name="submit">Kirim</string>
+    <string name="confirm_new_password">Konfirmasi kata sandi baru</string>
+    <string name="new_password">Kata sandi baru</string>
+
+    <string name="action_cancel">Batal</string>
+    <string name="action_retry">Coba lagi</string>
+    <string name="action_retry_update">Coba lagi pembaruan</string>
+    <string name="dialog_record_video">Rekam video</string>
+    <string name="dialog_choose_from_gallery">Pilih dari galeri</string>
+
+    <string name="label_today">Hari Ini</string>
+    <string name="label_yesterday">Kemarin</string>
+
+    <string name="placeholder_password_mask">*******</string>
+
+    <string name="msg_processing_transcription">Memproses transkripsi...</string>
+    <string name="msg_transcription_done_wait_update">Transkripsi selesai! Tunggu update...</string>
+    <string name="msg_failed_preparing_video">Gagal menyiapkan video!</string>
+
+    <string name="msg_failed_to_connect_with_reason">Gagal terhubung: %1$s</string>
+    <string name="msg_failed_parse_response_with_reason">Gagal memproses respons: %1$s</string>
+    <string name="msg_empty_response_from_server">Respons kosong dari server</string>
+
+    <string name="msg_failed_upload_video_translation">Gagal mengunggah video untuk terjemahan</string>
+    <string name="msg_failed_upload_video">Gagal mengunggah video</string>
+    <string name="msg_upload_failed_with_reason">Unggah gagal: %1$s</string>
+
+    <string name="msg_translate_status_updated_success">Status terjemahan berhasil diperbarui</string>
+    <string name="msg_video_sent_updates_success">Video berhasil dikirim dan pembaruan selesai</string>
+    <string name="msg_video_url_not_available">URL video tidak tersedia</string>
+
+    <string name="label_video_info">Resolusi: %1$s • %2$d fps • %3$s MB</string>
 
 </resources>

@@ -26,7 +26,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="centerCrop"
-                android:contentDescription="Video thumbnail" />
+                android:contentDescription="@string/cd_video_thumbnail" />
 
             <ImageButton
                 android:id="@+id/btnPlayVideo"
@@ -36,7 +36,7 @@
                 android:background="@drawable/bg_circle_light_purple"
                 android:padding="6dp"
                 android:src="@drawable/ic_play"
-                android:contentDescription="Play video" />
+                android:contentDescription="@string/cd_play_video" />
         </FrameLayout>
 
         <TextView
@@ -46,7 +46,7 @@
             android:textColor="@color/white"
             android:textSize="12sp"
             android:layout_marginTop="6dp"
-            android:text="00:00" />
+            android:text="@string/placeholder_duration" />
 
         <TextView
             android:id="@+id/tvMessageTime"

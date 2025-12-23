@@ -16,9 +16,9 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.chattingapp.R
 import com.chattingapp.ui.friendlist.addfriend.AddFriendActivity
-import com.google.android.material.button.MaterialButton
 import org.json.JSONObject
 import com.chattingapp.BuildConfig
+import android.widget.Button
 
 class FriendRequestActivity : AppCompatActivity() {
 
@@ -31,7 +31,7 @@ class FriendRequestActivity : AppCompatActivity() {
         setContentView(R.layout.activity_friend_request)
 
         val btnBack = findViewById<ImageView>(R.id.btnBack)
-        val btnAddFriend = findViewById<MaterialButton>(R.id.buttonAddFriend)
+        val btnAddFriend = findViewById<Button>(R.id.buttonAddFriend)
         recyclerView = findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
         queue = Volley.newRequestQueue(this)
@@ -47,7 +47,7 @@ class FriendRequestActivity : AppCompatActivity() {
         val userId = sharedPref.getString("user_id", null)
 
         if (userId == null) {
-            Toast.makeText(this, "User ID tidak ditemukan", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.msg_user_id_not_found), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -94,7 +94,7 @@ class FriendRequestActivity : AppCompatActivity() {
                         recyclerView.adapter = adapter
 
                     } else {
-                        Toast.makeText(this, "Gagal mengambil data", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.msg_failed_fetch_data), Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     Log.e("FriendReq", "Parsing error: ${e.message}")
@@ -102,7 +102,7 @@ class FriendRequestActivity : AppCompatActivity() {
             },
             { error ->
                 Log.e("FriendReq", "Volley error: ${error.message}")
-                Toast.makeText(this, "Network error", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_network_error_en), Toast.LENGTH_SHORT).show()
             }
         )
 
@@ -122,15 +122,15 @@ class FriendRequestActivity : AppCompatActivity() {
             { response ->
                 val status = response.optString("status")
                 if (status == "success") {
-                    Toast.makeText(this, "Friend request accepted!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_friend_request_accepted), Toast.LENGTH_SHORT).show()
                     getFriendRequests(receiverId)
                 } else {
-                    Toast.makeText(this, "Failed to accept request", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_friend_request_accept_failed), Toast.LENGTH_SHORT).show()
                 }
             },
             { error ->
                 Log.e("FriendReq", "Accept error: ${error.message}")
-                Toast.makeText(this, "Network error", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_network_error_en), Toast.LENGTH_SHORT).show()
             }
         )
 
@@ -148,18 +148,18 @@ class FriendRequestActivity : AppCompatActivity() {
             { response ->
                 val status = response.optString("status")
                 if (status == "success") {
-                    Toast.makeText(this, "Friend request rejected", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_friend_request_rejected), Toast.LENGTH_SHORT).show()
                     // Refresh list
                     val sharedPref = getSharedPreferences("UserData", Context.MODE_PRIVATE)
                     val userId = sharedPref.getString("user_id", null)
                     userId?.let { getFriendRequests(it) }
                 } else {
-                    Toast.makeText(this, "Failed to reject request", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.msg_friend_request_reject_failed), Toast.LENGTH_SHORT).show()
                 }
             },
             { error ->
                 Log.e("FriendReq", "Reject error: ${error.message}")
-                Toast.makeText(this, "Network error", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.msg_network_error_en), Toast.LENGTH_SHORT).show()
             }
         )
 

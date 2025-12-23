@@ -15,12 +15,12 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="18dp"
         android:layout_marginTop="12dp"
-        android:text="Daftar Teman"
+        android:text="@string/label_friends_list"
         android:textColor="@android:color/black"
         android:textStyle="bold"
         android:textSize="24sp" />
 
-    <com.google.android.material.card.MaterialCardView
+    <androidx.cardview.widget.CardView
         android:id="@+id/cardFriendRequest"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -42,7 +42,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Permintaan teman"
+                android:text="@string/label_friend_requests"
                 android:textColor="@android:color/white"
                 android:textStyle="bold"
                 android:textSize="16sp" />
@@ -54,7 +54,6 @@
                 android:layout_height="24dp"
                 android:background="@drawable/circle_badge"
                 android:gravity="center"
-                android:text=""
                 android:elevation="4dp"
                 android:textColor="@android:color/white"
                 android:textSize="12sp"
@@ -69,9 +68,9 @@
                 android:src="@drawable/ic_arrow_right"
                 android:layout_marginStart="12dp"/>
         </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </androidx.cardview.widget.CardView>
 
-    <com.google.android.material.card.MaterialCardView
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardCornerRadius="8dp"
@@ -100,7 +99,7 @@
                 android:src="@drawable/ic_search"/>
 
             <!-- Input Field -->
-            <com.google.android.material.textfield.TextInputEditText
+            <EditText
                 android:id="@+id/inputSearchFriend"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
@@ -109,7 +108,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
                 android:gravity="center_vertical"
-                android:hint="Cari username teman..."
+                android:hint="@string/hint_search_friend_username"
                 android:textSize="14sp"
                 android:background="@color/white_bone"
                 android:inputType="text" />
@@ -124,7 +123,7 @@
                 android:padding="8dp"
                 android:src="@drawable/ic_send"/>
         </RelativeLayout>
-    </com.google.android.material.card.MaterialCardView>
+    </androidx.cardview.widget.CardView>
 
     <!-- ADD THIS RECYCLERVIEW FOR FRIEND LIST -->
     <androidx.recyclerview.widget.RecyclerView

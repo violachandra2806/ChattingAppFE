@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="18dp"
         android:layout_marginTop="12dp"
-        android:text="Permintaan Teman"
+        android:text="@string/label_friend_requests"
         android:textColor="@android:color/black"
         android:textStyle="bold"
         android:textSize="24sp" />

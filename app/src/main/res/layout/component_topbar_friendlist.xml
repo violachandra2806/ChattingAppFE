@@ -1,31 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.appbar.MaterialToolbar xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.appcompat.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/topAppBar"
     android:layout_width="match_parent"
     android:layout_height="?attr/actionBarSize"
     android:background="@color/light_purple"
-    android:padding="2dp"
+    android:padding="0dp"
     app:contentInsetStart="0dp"
     app:contentInsetEnd="0dp">
 
-    <com.google.android.material.button.MaterialButton
+    <Button
         android:id="@+id/buttonAddFriend"
-        android:layout_width="169dp"
-        android:layout_height="38dp"
-        android:layout_gravity="end"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_gravity="end|center_vertical"
         android:fontFamily="@font/poppins_bold"
-        android:padding="4dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="16dp"
+        android:drawableStart="@drawable/ic_person_add"
+        android:drawablePadding="8dp"
         android:layout_marginEnd="12dp"
-        android:text="Tambah Teman"
+        android:text="@string/action_add_friend"
         android:textAllCaps="false"
         android:textColor="@color/white"
         android:textSize="12sp"
         android:elevation="4dp"
-        app:backgroundTint="@color/lighter_purple"
-        app:cornerRadius="19dp"
-        app:icon="@drawable/ic_person_add"
-        app:iconSize="16dp"
-        app:iconGravity="textStart"
-        app:iconTint="@color/white" />
-</com.google.android.material.appbar.MaterialToolbar>
+        android:background="@drawable/bg_pill_add_friend" />
+</androidx.appcompat.widget.Toolbar>

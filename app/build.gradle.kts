@@ -19,7 +19,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"http://192.168.18.97:8080/chattingapp/\"")
+        buildConfigField("String", "BASE_URL", "\"http://192.168.0.181:8080/chattingapp/\"")
         buildConfigField("String", "SUPABASE_URL", "\"https://nxagvhkldfxenczfahch.supabase.co\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54YWd2aGtsZGZ4ZW5jemZhaGNoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0ODc4NTUsImV4cCI6MjA2MzA2Mzg1NX0.6fxDR2kDAzIbey_anvHyOM6FKhbcvOfPN0LMsKp2BuE\"")
     }
@@ -66,7 +66,7 @@ dependencies {
     // Core AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.material)
+    // (Removed) Material Components UI
     implementation(libs.androidx.constraintlayout)
 
     // Lifecycle components
@@ -93,7 +93,7 @@ dependencies {
     // Animations, transitions, etc.
     implementation("androidx.transition:transition:1.4.1")
     implementation("com.airbnb.android:lottie:6.1.0")
-    implementation ("com.google.android.material:material:1.9.0")
+    implementation("androidx.cardview:cardview:1.0.0")
 
 
     // Testing
@@ -104,8 +104,7 @@ dependencies {
     // Volley Backend
     implementation("com.android.volley:volley:1.2.1")
 
-    // Google
-    implementation("com.google.android.gms:play-services-auth:21.0.0")
+    // (Removed) Google Sign-In
 
     // Socket.IO client for Android
     implementation("io.socket:socket.io-client:2.0.1")
@@ -152,8 +151,6 @@ dependencies {
     implementation("androidx.camera:camera-video:1.2.3")
     implementation("androidx.camera:camera-view:1.2.3")
     implementation("androidx.camera:camera-extensions:1.2.3")
-
-    implementation("com.google.android.material:material:1.9.0")
 
     // For permissions
     implementation("com.guolindev.permissionx:permissionx:1.7.1")

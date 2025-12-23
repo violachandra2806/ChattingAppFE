@@ -25,11 +25,13 @@
 
             <ImageButton
                 android:id="@+id/btnPlayVoice"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:background="@drawable/bg_circle_light_purple"
+                android:padding="8dp"
+                android:scaleType="centerInside"
                 android:src="@drawable/ic_play"
-                android:contentDescription="Play"/>
+                android:contentDescription="@string/cd_play"/>
 
             <com.chattingapp.ui.chat.WaveformView
                 android:id="@+id/waveformView"
@@ -44,14 +46,14 @@
                 android:layout_marginStart="8dp"
                 android:textColor="@android:color/white"
                 android:textSize="13sp"
-                android:text="00:00"/>
+                android:text="@string/placeholder_duration"/>
         </LinearLayout>
 
         <TextView
             android:id="@+id/tvTranscriptAction"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Transkrip"
+            android:text="@string/action_transcript"
             android:textColor="@color/white"
             android:textStyle="bold"
             android:visibility="gone"

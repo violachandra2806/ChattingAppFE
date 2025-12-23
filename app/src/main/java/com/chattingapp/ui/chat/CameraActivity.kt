@@ -110,12 +110,16 @@ class CameraActivity : AppCompatActivity() {
                 }
 
                 if (Manifest.permission.RECORD_AUDIO in deniedPermissions) {
-                    Toast.makeText(this, "Audio permission is required for recording", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        getString(R.string.msg_audio_permission_required_recording_long),
+                        Toast.LENGTH_LONG
+                    ).show()
                     // Don't finish, let user retry
                 }
 
                 if (Manifest.permission.CAMERA in deniedPermissions) {
-                    Toast.makeText(this, "Camera permission is required", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, getString(R.string.msg_camera_permission_required), Toast.LENGTH_LONG).show()
                     finish() // Can't use camera without camera permission
                 }
             }
@@ -131,7 +135,11 @@ class CameraActivity : AppCompatActivity() {
         ) {
             // Log but don't request here - it's already handled in onCreate/onResume
             Log.e("CAMERA", "Audio permission not granted")
-            Toast.makeText(this, "Audio permission required for recording", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                getString(R.string.msg_audio_permission_required_recording),
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
 
@@ -165,7 +173,12 @@ class CameraActivity : AppCompatActivity() {
                 previewView.visibility = View.VISIBLE
             } catch (e: Exception) {
                 Log.e("CAMERA", "Failed to bind camera: ${e.message}")
-                Toast.makeText(this, "Failed to start camera: ${e.message}", Toast.LENGTH_SHORT).show()
+                val message = e.message ?: getString(R.string.msg_unknown_error)
+                Toast.makeText(
+                    this,
+                    getString(R.string.msg_camera_start_failed, message),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
 
         }, ContextCompat.getMainExecutor(this))
@@ -201,7 +214,11 @@ class CameraActivity : AppCompatActivity() {
                 Manifest.permission.RECORD_AUDIO
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            Toast.makeText(this, "Audio permission required for recording", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                getString(R.string.msg_audio_permission_required_recording),
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
 
@@ -255,7 +272,13 @@ class CameraActivity : AppCompatActivity() {
                             Handler(Looper.getMainLooper()).postDelayed({
                                 uploadVideo()
                             }, 500)
-                        } else Toast.makeText(this, "Recording failed!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(
+                                this,
+                                getString(R.string.msg_recording_failed),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 }
             }
@@ -278,8 +301,8 @@ class CameraActivity : AppCompatActivity() {
     private fun uploadVideo() {
         loadingOverlay.visibility = View.VISIBLE
 
-        val uri = recordedVideoUri ?: return hideAndError("Failed preparing video!")
-        val file = uriToFile(uri) ?: return hideAndError("Failed preparing video!")
+        val uri = recordedVideoUri ?: return hideAndError(getString(R.string.msg_failed_preparing_video))
+        val file = uriToFile(uri) ?: return hideAndError(getString(R.string.msg_failed_preparing_video))
 
         val requestBody = MultipartBody.Builder().setType(MultipartBody.FORM)
             .addFormDataPart("video", file.name, file.asRequestBody("video/mp4".toMediaTypeOrNull()))
@@ -342,14 +365,16 @@ class CameraActivity : AppCompatActivity() {
 
                     } else {
                         Log.e("UPLOAD_VIDEO", "❌ Upload failed: ${response.message}")
-                        showErrorDialog("Upload failed: ${response.message}")
+                        showErrorDialog(
+                            getString(R.string.msg_upload_failed_with_reason, response.message)
+                        )
                     }
                 }
             } catch (e: Exception) {
                 Log.e("UPLOAD_VIDEO", "❌ Error: ${e.localizedMessage}")
                 withContext(Dispatchers.Main) {
                     loadingOverlay.visibility = View.GONE
-                    showErrorDialog(e.message ?: "Network error")
+                    showErrorDialog(e.message ?: getString(R.string.msg_network_error_en))
                 }
             }
         }
@@ -362,11 +387,11 @@ class CameraActivity : AppCompatActivity() {
 
     private fun showErrorDialog(msg: String) {
         AlertDialog.Builder(this)
-            .setTitle("Upload Failed")
+            .setTitle(getString(R.string.dialog_upload_failed))
             .setMessage(msg)
             .setCancelable(false)
-            .setPositiveButton("Retry") { _, _ -> uploadVideo() }
-            .setNegativeButton("Cancel", null)
+            .setPositiveButton(getString(R.string.action_retry)) { _, _ -> uploadVideo() }
+            .setNegativeButton(getString(R.string.action_cancel), null)
             .show()
     }
 

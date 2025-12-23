@@ -1,12 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.bottomnavigation.BottomNavigationView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RadioGroup xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/bottomNav"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:attr/windowBackground"
-    android:elevation="8dp"
-    android:fontFamily="@font/poppins_bold"
-    app:menu="@menu/bottom_nav_menu"
-    app:itemTextAppearanceActive="@style/BottomNavText"
-    app:itemTextAppearanceInactive="@style/BottomNavText"/>
+    android:orientation="horizontal"
+    android:background="?android:attr/windowBackground">
+
+    <RadioButton
+        android:id="@+id/navigation_dashboard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:button="@null"
+        android:drawableTop="@drawable/nav_ic_chat_bubble"
+        android:gravity="center"
+        android:paddingVertical="10dp"
+        android:textColor="@color/bottom_nav_item_tint"
+        android:text="@string/title_chat" />
+
+    <RadioButton
+        android:id="@+id/navigation_friends"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:button="@null"
+        android:drawableTop="@drawable/nav_ic_people"
+        android:gravity="center"
+        android:paddingVertical="10dp"
+        android:textColor="@color/bottom_nav_item_tint"
+        android:text="@string/title_friend" />
+
+    <RadioButton
+        android:id="@+id/navigation_settings"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:button="@null"
+        android:drawableTop="@drawable/nav_ic_gear"
+        android:gravity="center"
+        android:paddingVertical="10dp"
+        android:textColor="@color/bottom_nav_item_tint"
+        android:text="@string/title_setting" />
+
+</RadioGroup>

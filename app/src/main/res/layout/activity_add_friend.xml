@@ -13,12 +13,12 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="18dp"
         android:layout_marginTop="12dp"
-        android:text="Tambah Teman"
+        android:text="@string/action_add_friend"
         android:textColor="@android:color/black"
         android:textSize="20sp"
         android:textStyle="bold"/>
 
-    <com.google.android.material.card.MaterialCardView
+    <androidx.cardview.widget.CardView
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -48,7 +48,7 @@
                 android:src="@drawable/ic_search"/>
 
             <!-- Input Field -->
-            <com.google.android.material.textfield.TextInputEditText
+            <EditText
                 android:id="@+id/inputSearchUsername"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
@@ -57,7 +57,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
                 android:gravity="center_vertical"
-                android:hint="Ketik username..."
+                android:hint="@string/hint_type_username"
                 android:textSize="14sp"
                 android:background="@color/white_bone"
                 android:inputType="text" />
@@ -73,7 +73,7 @@
                 android:src="@drawable/ic_send"/>
         </RelativeLayout>
 
-    </com.google.android.material.card.MaterialCardView>
+    </androidx.cardview.widget.CardView>
 
     <!-- Info hasil pencarian -->
     <TextView
