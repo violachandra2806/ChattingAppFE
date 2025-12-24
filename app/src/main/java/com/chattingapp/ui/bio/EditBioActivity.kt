@@ -14,6 +14,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.chattingapp.BuildConfig
 import com.chattingapp.R
+import com.chattingapp.utils.AvatarUtils
 import com.google.android.material.button.MaterialButton
 import org.json.JSONObject
 
@@ -148,10 +149,8 @@ class EditBioActivity : AppCompatActivity() {
                             // Set UI
                             tvUsername.text = username
 
-                            // Set PFP Initials
-                            if (username.isNotEmpty()) {
-                                tvProfileInitials.text = username.take(2).uppercase()
-                            }
+                            // Set PFP Initials (1 character + randomized stable background)
+                            AvatarUtils.applyTo(tvProfileInitials, username)
 
                             // Set Bio
                             if (bio.isNotEmpty() && bio != "null") {

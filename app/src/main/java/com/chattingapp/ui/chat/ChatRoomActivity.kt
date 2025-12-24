@@ -55,6 +55,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.security.MessageDigest
 import kotlinx.coroutines.Job
+import com.chattingapp.utils.AvatarUtils
 
 class ChatRoomActivity : AppCompatActivity() {
 
@@ -131,12 +132,8 @@ class ChatRoomActivity : AppCompatActivity() {
     private fun setupToolbar() {
         binding.tvChatName.text = otherUserName
 
-        // Load profile picture
-        Glide.with(this)
-            .load(otherUserPhoto)
-            .placeholder(R.drawable.ic_person_placeholder)
-            .error(R.drawable.ic_person_placeholder)
-            .into(binding.ivProfilePicture)
+        // Load profile picture; fallback to initial with random (stable) background
+        AvatarUtils.loadInto(binding.ivProfilePicture, otherUserPhoto, otherUserName)
 
         // Back button click
         binding.btnBack.setOnClickListener {

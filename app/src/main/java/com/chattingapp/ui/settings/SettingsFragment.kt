@@ -20,6 +20,7 @@ import com.chattingapp.BuildConfig
 import com.chattingapp.R
 import com.chattingapp.ui.bio.EditBioActivity
 import com.chattingapp.ui.editprofile.EditProfileActivity
+import com.chattingapp.utils.AvatarUtils
 
 class SettingsFragment : Fragment() {
 
@@ -89,7 +90,8 @@ class SettingsFragment : Fragment() {
     }
 
     private fun fetchUserProfile(userId: String) {
-        val url = "${BuildConfig.BASE_URL}chattingapp/getuserdetailsbyid?user_id=$userId"
+        val base = if (BuildConfig.BASE_URL.endsWith("/")) BuildConfig.BASE_URL else BuildConfig.BASE_URL + "/"
+        val url = "${base}getuserdetailsbyid?user_id=$userId"
 
         val request = JsonObjectRequest(
             Request.Method.GET, url, null,
@@ -97,29 +99,56 @@ class SettingsFragment : Fragment() {
                 try {
                     val status = response.optString("status")
                     if (status == "success") {
-                        val dataArray = response.optJSONArray("data")
-                        if (dataArray != null && dataArray.length() > 0) {
-                            val userObj = dataArray.getJSONObject(0)
-
-                            val username = userObj.optString("username", "N/A")
-                            val email = userObj.optString("user_email", "N/A")
-                            val dob = userObj.optString("dob", "null")
-
-                            // Update UI
-                            etUsername?.setText(username)
-                            etEmail?.setText(email)
-
-                            if (dob != "null" && dob.isNotEmpty()) {
-                                etDob?.setText(dob)
-                            } else {
-                                etDob?.setText("-")
-                            }
-
-                            // Set Initials for Profile Picture (TextView based on XML)
-                            if (username.isNotEmpty()) {
-                                tvProfilePicture?.text = username.take(2).uppercase()
-                            }
+                        val userObj = if (response.has("data") && response.optJSONArray("data") != null && response.optJSONArray("data")!!.length() > 0) {
+                            response.optJSONArray("data")!!.getJSONObject(0)
+                        } else {
+                            response
                         }
+
+                        val username = userObj.optString("username", "").trim()
+                        val email = userObj.optString("user_email", "").trim()
+
+                        fun looksLikeUrl(s: String?): Boolean {
+                            val v = s?.trim().orEmpty()
+                            return v.startsWith("http://", ignoreCase = true) || v.startsWith("https://", ignoreCase = true)
+                        }
+
+                        fun looksLikeDateLikeString(s: String?): Boolean {
+                            val v = s?.trim().orEmpty()
+                            if (v.isBlank()) return false
+                            if (v.equals("null", true)) return false
+                            if (v.equals("true", true) || v.equals("false", true)) return false
+                            if (looksLikeUrl(v)) return false
+                            return v.contains("GMT", ignoreCase = true) || v.contains(",") || v.contains("-")
+                        }
+
+                        val rawDob = userObj.optString("dob", "").trim()
+                        val dob = if (looksLikeDateLikeString(rawDob)) {
+                            rawDob
+                        } else {
+                            val rawBio = userObj.optString("bio", "").trim()
+                            if (looksLikeDateLikeString(rawBio)) rawBio else rawDob
+                        }
+
+                        val profilePictureCandidate = userObj.optString("profile_picture", "").trim()
+                        val blockedUserCandidate = userObj.optString("blocked_user", "").trim()
+                        val profilePictureUrl = when {
+                            looksLikeUrl(profilePictureCandidate) -> profilePictureCandidate
+                            looksLikeUrl(blockedUserCandidate) -> blockedUserCandidate
+                            else -> null
+                        }
+
+                        // Update UI
+                        if (!isAdded) return@JsonObjectRequest
+                        etUsername?.setText(username)
+                        etEmail?.setText(email)
+                        etDob?.setText(dob.ifBlank { "-" })
+
+                        // Set Initials for Profile Picture (TextView based on XML)
+                        tvProfilePicture?.let { AvatarUtils.applyTo(it, username) }
+
+                        // (Optional) If your layout later uses an ImageView for profile picture, you can load profilePictureUrl there.
+                        Log.d("SettingsFragment", "Profile loaded. user_id=$userId username=$username email=$email dob=$dob profilePic=$profilePictureUrl")
                     } else {
                         Log.e("SettingsFragment", "Failed status: $status")
                         Toast.makeText(requireContext(), "Gagal memuat profil", Toast.LENGTH_SHORT).show()

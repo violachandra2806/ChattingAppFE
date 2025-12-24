@@ -16,6 +16,7 @@ import com.android.volley.toolbox.Volley
 import com.chattingapp.BuildConfig
 import com.chattingapp.R
 import com.chattingapp.ui.bio.EditBioActivity
+import com.chattingapp.utils.AvatarUtils
 
 // import com.chattingapp.ui.login.LoginActivity
 
@@ -108,9 +109,7 @@ class ProfileActivity : AppCompatActivity() {
                             }
 
                             // Set Initials for Profile Picture (TextView based on XML)
-                            if (username.isNotEmpty()) {
-                                tvProfilePicture.text = username.take(2).uppercase()
-                            }
+                            AvatarUtils.applyTo(tvProfilePicture, username)
                         }
                     } else {
                         Log.e("ProfileActivity", "Failed status: $status")

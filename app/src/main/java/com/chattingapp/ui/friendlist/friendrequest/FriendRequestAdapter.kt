@@ -7,6 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.chattingapp.R
+import com.chattingapp.utils.AvatarUtils
 
 class FriendRequestAdapter(
     private var requests: List<FriendRequest>,
@@ -15,6 +16,7 @@ class FriendRequestAdapter(
 ) : RecyclerView.Adapter<FriendRequestAdapter.RequestViewHolder>() {
 
     inner class RequestViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val profileImage: ImageView = itemView.findViewById(R.id.profileImage)
         val username: TextView = itemView.findViewById(R.id.username)
         val btnAccept: ImageView = itemView.findViewById(R.id.btnAccept)
         val btnReject: ImageView = itemView.findViewById(R.id.btnReject)
@@ -33,6 +35,9 @@ class FriendRequestAdapter(
     override fun onBindViewHolder(holder: RequestViewHolder, position: Int) {
         val request = requests[position]
         holder.username.text = "@${request.username}"
+
+        // No profile picture in this model; always fallback to initial with random (stable) background
+        AvatarUtils.loadInto(holder.profileImage, null, request.username)
 
         holder.btnAccept.setOnClickListener { onAccept(request) }
         holder.btnReject.setOnClickListener { onReject(request) }

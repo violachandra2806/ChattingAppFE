@@ -4,9 +4,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.chattingapp.R
+import com.chattingapp.utils.AvatarUtils
 
 class AddFriendAdapter(
     private val results: MutableList<FriendResult>,
@@ -15,6 +17,7 @@ class AddFriendAdapter(
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val username: TextView = itemView.findViewById(R.id.username)
+        val profileImage: ImageView = itemView.findViewById(R.id.profileImage)
         val btnAdd: Button = itemView.findViewById(R.id.btnAddFriend)
     }
 
@@ -27,6 +30,9 @@ class AddFriendAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val friend = results[position]
         holder.username.text = friend.username
+
+        // Load profile picture; fallback to initial with random (stable) background
+        AvatarUtils.loadInto(holder.profileImage, friend.profilePicture, friend.username)
 
         if (friend.requested) {
             holder.btnAdd.text = "Menunggu"
