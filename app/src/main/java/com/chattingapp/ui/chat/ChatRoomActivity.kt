@@ -128,6 +128,16 @@ class ChatRoomActivity : AppCompatActivity() {
         }
     }
 
+    private fun openBioActivity() {
+        val intent = Intent(this, BioActivity::class.java).apply {
+            putExtra("user_id", otherUserId)
+            putExtra("username", otherUserName)
+            putExtra("profile_picture", otherUserPhoto)
+        }
+        startActivity(intent)
+    }
+
+
     private fun setupToolbar() {
         binding.tvChatName.text = otherUserName
 
@@ -141,6 +151,14 @@ class ChatRoomActivity : AppCompatActivity() {
         // Back button click
         binding.btnBack.setOnClickListener {
             finish()
+        }
+
+        binding.ivProfilePicture.setOnClickListener {
+            openBioActivity()
+        }
+
+        binding.tvChatName.setOnClickListener {
+            openBioActivity()
         }
     }
 

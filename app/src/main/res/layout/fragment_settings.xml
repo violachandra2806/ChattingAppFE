@@ -16,7 +16,7 @@
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Profile"
+            android:text="Pengaturan"
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
@@ -30,11 +30,20 @@
             android:layout_height="80dp"
             android:layout_gravity="center_horizontal"
             android:gravity="center"
-            android:text="PFP"
             android:textColor="@android:color/white"
             android:textStyle="bold"
             android:textSize="18sp"
             android:background="@drawable/bg_circle_light_purple"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Profil Saya"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_gravity="center_horizontal"
             android:layout_marginBottom="24dp" />
 
         <!-- Username -->
@@ -42,7 +51,7 @@
             android:id="@+id/etUsername"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="example123"
+            android:hint="Memuat username..."
             android:enabled="false"
             android:textSize="14sp"
             android:backgroundTint="#40000000"
@@ -53,7 +62,7 @@
             android:id="@+id/etEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="example@example.com"
+            android:hint="Memuat email..."
             android:enabled="false"
             android:textSize="14sp"
             android:backgroundTint="#40000000"
@@ -64,7 +73,7 @@
             android:id="@+id/etDob"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="26 May 2001"
+            android:hint="Memuat tanggal lahir..."
             android:enabled="false"
             android:textSize="14sp"
             android:backgroundTint="#40000000"
@@ -107,7 +116,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Edit Profile"
+                android:text="Edit Profil"
                 android:textSize="14sp"
                 android:layout_marginStart="16dp" />
 
@@ -163,7 +172,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Log out"
+                android:text="Keluar"
                 android:textSize="14sp"
                 android:layout_marginStart="16dp" />
 

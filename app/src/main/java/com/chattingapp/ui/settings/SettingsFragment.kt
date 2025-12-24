@@ -78,7 +78,6 @@ class SettingsFragment : Fragment() {
         }
 
         btnEditBio?.setOnClickListener {
-            Toast.makeText(requireContext(), "Fitur Edit Bio akan segera hadir", Toast.LENGTH_SHORT).show()
             val intent = Intent(requireContext(), EditBioActivity::class.java)
             startActivity(intent)
         }
@@ -89,7 +88,7 @@ class SettingsFragment : Fragment() {
     }
 
     private fun fetchUserProfile(userId: String) {
-        val url = "${BuildConfig.BASE_URL}chattingapp/getuserdetailsbyid?user_id=$userId"
+        val url = "${BuildConfig.BASE_URL}getuserdetailsbyid?user_id=$userId"
 
         val request = JsonObjectRequest(
             Request.Method.GET, url, null,
@@ -103,7 +102,7 @@ class SettingsFragment : Fragment() {
 
                             val username = userObj.optString("username", "N/A")
                             val email = userObj.optString("user_email", "N/A")
-                            val dob = userObj.optString("dob", "null")
+                            val dob = userObj.optString("dob", "N/A")
 
                             // Update UI
                             etUsername?.setText(username)
@@ -117,7 +116,7 @@ class SettingsFragment : Fragment() {
 
                             // Set Initials for Profile Picture (TextView based on XML)
                             if (username.isNotEmpty()) {
-                                tvProfilePicture?.text = username.take(2).uppercase()
+                                tvProfilePicture?.text = username.take(1).uppercase()
                             }
                         }
                     } else {

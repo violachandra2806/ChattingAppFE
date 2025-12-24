@@ -1,9 +1,7 @@
-package com.chattingapp.ui.bio
+package com.chattingapp.ui.chat
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
-import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
@@ -14,9 +12,8 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.chattingapp.BuildConfig
 import com.chattingapp.R
-import com.google.android.material.button.MaterialButton
-import org.json.JSONObject
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 private fun formatDobIndo(dobString: String): String {
@@ -50,7 +47,7 @@ private fun formatDobIndo(dobString: String): String {
     return "-"
 }
 
-class EditBioActivity : AppCompatActivity() {
+class BioActivity : AppCompatActivity() {
 
     private lateinit var btnClose: ImageView
     private lateinit var tvProfileInitials: TextView
@@ -58,14 +55,11 @@ class EditBioActivity : AppCompatActivity() {
     private lateinit var tvUsername: TextView
     private lateinit var etBio: EditText
     private lateinit var tvDob: TextView
-    private lateinit var btnEdit: MaterialButton
-
-    private var isEditing = false
     private var userId: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_edit_bio)
+        setContentView(R.layout.activity_bio)
 
         btnClose = findViewById(R.id.btnClose)
         tvProfileInitials = findViewById(R.id.tvProfileInitials)
@@ -73,10 +67,8 @@ class EditBioActivity : AppCompatActivity() {
         tvUsername = findViewById(R.id.tvUsername)
         etBio = findViewById(R.id.etBio)
         tvDob = findViewById(R.id.tvDob)
-        btnEdit = findViewById(R.id.btnEdit)
 
-        val sharedPreferences = getSharedPreferences("UserData", Context.MODE_PRIVATE)
-        userId = sharedPreferences.getString("user_id", null)
+        userId = intent.getStringExtra("user_id")
 
         if (userId != null) {
             fetchUserProfile(userId!!)
@@ -92,74 +84,6 @@ class EditBioActivity : AppCompatActivity() {
         btnClose.setOnClickListener {
             finish()
         }
-
-        btnEdit.setOnClickListener {
-            if (!isEditing) {
-                startEditing()
-            } else {
-                saveBio()
-            }
-        }
-    }
-
-    private fun startEditing() {
-        isEditing = true
-        btnEdit.text = "Save"
-
-        etBio.isEnabled = true
-        etBio.requestFocus()
-
-        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.showSoftInput(etBio, InputMethodManager.SHOW_IMPLICIT)
-        // etBio.setBackgroundResource(android.R.drawable.edit_text)
-    }
-
-    private fun stopEditing() {
-        isEditing = false
-        btnEdit.text = "Edit"
-
-        etBio.isEnabled = false
-        etBio.clearFocus()
-
-        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(etBio.windowToken, 0)
-
-        // etBio.background = null // Restore transparent background
-    }
-
-    private fun saveBio() {
-        val newBio = etBio.text.toString().trim()
-
-        btnEdit.isEnabled = false
-        btnEdit.text = "Saving..."
-
-        val url = "${BuildConfig.BASE_URL}updateuserdetails?user_id=$userId"
-
-        val jsonBody = JSONObject()
-        jsonBody.put("bio", newBio)
-
-        val request = JsonObjectRequest(Request.Method.PUT, url, jsonBody,
-            { response ->
-                btnEdit.isEnabled = true
-
-                val status = response.optString("status")
-                if (status == "success" || response.has("message")) {
-                    Toast.makeText(this, "Bio updated!", Toast.LENGTH_SHORT).show()
-                    stopEditing()
-                } else {
-                    Toast.makeText(this, "Failed to update bio", Toast.LENGTH_SHORT).show()
-                    btnEdit.text = "Save" // Revert button text
-                }
-            },
-            { error ->
-                btnEdit.isEnabled = true
-                btnEdit.text = "Save" // Revert button text
-                Log.e("EditBio", "Update error: ${error.message}")
-                Toast.makeText(this, "Network error", Toast.LENGTH_SHORT).show()
-            }
-        )
-
-        Volley.newRequestQueue(this).add(request)
     }
 
     private fun fetchUserProfile(userId: String) {
@@ -191,7 +115,7 @@ class EditBioActivity : AppCompatActivity() {
                                 etBio.setText(bio)
                             } else {
                                 etBio.setText("")
-                                etBio.hint = "(Bio belum diatur)"
+                                etBio.hint = "-"
                             }
 
                             // Set Tgl Lahir
