@@ -176,4 +176,14 @@
 
     <string name="label_video_info">Resolusi: %1$s • %2$d fps • %3$s MB</string>
 
+    <!-- Video download (cache) UX -->
+    <string name="dialog_download_video_title">Unduh video?</string>
+    <string name="dialog_download_video_message">Video akan diunduh ke penyimpanan lokal agar lebih cepat diputar. Lanjutkan?</string>
+    <string name="action_download_and_play">Unduh &amp; Putar</string>
+    <string name="label_downloading">Mengunduh…</string>
+    <string name="label_downloading_percent">Mengunduh… %1$d%%</string>
+    <string name="msg_video_already_downloading">Video sedang diunduh…</string>
+    <string name="msg_video_download_failed">Gagal mengunduh video: %1$s</string>
+    <string name="label_transcribing_in_progress">Sedang proses…</string>
+
 </resources>

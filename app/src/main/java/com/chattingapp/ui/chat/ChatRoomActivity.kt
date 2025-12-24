@@ -50,6 +50,11 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import android.content.Intent
 import android.provider.MediaStore
+import android.os.Environment
+import java.io.FileOutputStream
+import java.io.IOException
+import java.security.MessageDigest
+import kotlinx.coroutines.Job
 
 class ChatRoomActivity : AppCompatActivity() {
 
@@ -82,6 +87,8 @@ class ChatRoomActivity : AppCompatActivity() {
     fun getPlayerHelper(): AudioPlayerHelper = playerHelper
 
     private var realtimeChannel: io.github.jan.supabase.realtime.RealtimeChannel? = null
+
+    private val videoDownloadJobs = mutableMapOf<String, Job>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -137,15 +144,22 @@ class ChatRoomActivity : AppCompatActivity() {
     }
 
     private fun setupRecycler() {
-        adapter = MessageAdapter(currentUserId, onPlayVoice = { msg, _view ->
+        adapter = MessageAdapter(
+            currentUserId,
+            onPlayVoice = { msg, _view ->
             msg.mediaUrl?.let { url ->
                 playerHelper.play(url) {
                     android.util.Log.d("AudioPlayer", "Playback finished for: ${msg.messageId}")
                 }
             }
-        }, onTranscribe = { msg ->
-            callTranscribe(msg.messageId, msg.mediaUrl ?: "")
-        })
+        },
+            onTranscribe = { msg ->
+                callTranscribe(msg.messageId, msg.mediaUrl ?: "")
+            },
+            onOpenVideo = { msg ->
+                handleVideoOpenRequested(msg)
+            }
+        )
 
         binding.recyclerMessages.adapter = adapter
         val lm = LinearLayoutManager(this)
@@ -153,6 +167,156 @@ class ChatRoomActivity : AppCompatActivity() {
         binding.recyclerMessages.layoutManager = lm
 
         binding.recyclerMessages.addItemDecoration(StickyDateHeaderDecoration())
+    }
+
+    private fun handleVideoOpenRequested(message: Message) {
+        val videoUrl = message.mediaUrl
+        if (videoUrl.isNullOrBlank()) {
+            Toast.makeText(this, getString(R.string.msg_video_url_not_available), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val cachedFile = getCachedVideoFile(message.messageId, videoUrl)
+        if (cachedFile.exists() && cachedFile.length() > 0) {
+            openVideoPlayer(message, Uri.fromFile(cachedFile).toString())
+            return
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.dialog_download_video_title))
+            .setMessage(getString(R.string.dialog_download_video_message))
+            .setPositiveButton(getString(R.string.action_download_and_play)) { dialog, _ ->
+                dialog.dismiss()
+                startDownloadVideoThenOpen(message, videoUrl)
+            }
+            .setNegativeButton(getString(R.string.action_cancel)) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun openVideoPlayer(message: Message, videoUriString: String) {
+        val intent = Intent(this, VideoPlayerActivity::class.java).apply {
+            putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, videoUriString)
+            putExtra(VideoPlayerActivity.EXTRA_MESSAGE_ID, message.messageId)
+            putExtra(VideoPlayerActivity.EXTRA_ROOM_ID, message.roomId)
+            putExtra(VideoPlayerActivity.EXTRA_TRANSLATE_YN, message.translateYN ?: "N")
+            putExtra(VideoPlayerActivity.EXTRA_FRAME_RATE, message.frameRate ?: 30)
+            putExtra(VideoPlayerActivity.EXTRA_RESOLUTION, message.resolution ?: "")
+            putExtra(VideoPlayerActivity.EXTRA_DURATION, (message.durationSec ?: 0) * 1000)
+        }
+        startActivity(intent)
+    }
+
+    private fun startDownloadVideoThenOpen(message: Message, videoUrl: String) {
+        val messageId = message.messageId
+        if (messageId.isBlank()) {
+            Toast.makeText(this, getString(R.string.msg_video_download_failed, getString(R.string.msg_unknown_error)), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (videoDownloadJobs[messageId]?.isActive == true) {
+            Toast.makeText(this, getString(R.string.msg_video_already_downloading), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val outFile = getCachedVideoFile(messageId, videoUrl)
+        val tmpFile = File(outFile.parentFile, outFile.name + ".part")
+        outFile.parentFile?.mkdirs()
+
+        adapter.updateVideoDownloadState(
+            messageId,
+            MessageAdapter.VideoDownloadUiState(indeterminate = true, progressPercent = null)
+        )
+
+        val job = lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val req = Request.Builder().url(videoUrl).get().build()
+                val resp = httpClient.newCall(req).execute()
+                resp.use { response ->
+                    if (!response.isSuccessful) {
+                        throw IOException("HTTP ${response.code}")
+                    }
+
+                    val body = response.body ?: throw IOException("Empty body")
+                    val contentLength = body.contentLength()
+                    val hasLength = contentLength > 0
+
+                    withContext(Dispatchers.Main) {
+                        adapter.updateVideoDownloadState(
+                            messageId,
+                            MessageAdapter.VideoDownloadUiState(indeterminate = !hasLength, progressPercent = if (hasLength) 0 else null)
+                        )
+                    }
+
+                    body.byteStream().use { input ->
+                        FileOutputStream(tmpFile).use { output ->
+                            val buffer = ByteArray(8 * 1024)
+                            var bytesRead: Int
+                            var downloaded = 0L
+                            var lastPercent = -1
+
+                            while (input.read(buffer).also { bytesRead = it } != -1) {
+                                output.write(buffer, 0, bytesRead)
+                                downloaded += bytesRead
+
+                                if (hasLength) {
+                                    val percent = ((downloaded * 100L) / contentLength).toInt().coerceIn(0, 100)
+                                    if (percent != lastPercent) {
+                                        lastPercent = percent
+                                        withContext(Dispatchers.Main) {
+                                            adapter.updateVideoDownloadState(
+                                                messageId,
+                                                MessageAdapter.VideoDownloadUiState(indeterminate = false, progressPercent = percent)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            output.flush()
+                        }
+                    }
+                }
+
+                if (outFile.exists()) outFile.delete()
+                if (!tmpFile.renameTo(outFile)) {
+                    throw IOException("Failed to finalize file")
+                }
+
+                withContext(Dispatchers.Main) {
+                    adapter.updateVideoDownloadState(messageId, null)
+                    openVideoPlayer(message, Uri.fromFile(outFile).toString())
+                }
+            } catch (e: Exception) {
+                try {
+                    if (tmpFile.exists()) tmpFile.delete()
+                } catch (_: Exception) {
+                }
+                withContext(Dispatchers.Main) {
+                    adapter.updateVideoDownloadState(messageId, null)
+                    val reason = e.message ?: getString(R.string.msg_unknown_error)
+                    Toast.makeText(this@ChatRoomActivity, getString(R.string.msg_video_download_failed, reason), Toast.LENGTH_SHORT).show()
+                }
+            } finally {
+                videoDownloadJobs.remove(messageId)
+            }
+        }
+
+        videoDownloadJobs[messageId] = job
+    }
+
+    private fun getCachedVideoFile(messageId: String, videoUrl: String): File {
+        val safeId = messageId.trim().ifBlank { sha1(videoUrl) }
+        val dir = File(getExternalFilesDir(Environment.DIRECTORY_MOVIES), "downloaded_videos")
+        return File(dir, "video_$safeId.mp4")
+    }
+
+    private fun sha1(input: String): String {
+        val md = MessageDigest.getInstance("SHA-1")
+        val bytes = md.digest(input.toByteArray())
+        val sb = StringBuilder(bytes.size * 2)
+        for (b in bytes) sb.append(String.format("%02x", b))
+        return sb.toString()
     }
 
     private fun setupInput() {
@@ -835,5 +999,9 @@ class ChatRoomActivity : AppCompatActivity() {
         } catch (e: Exception) {
             android.util.Log.e("ChatRealtime", "Error unsubscribing: ${e.message}", e)
         }
+
+        // Best-effort cancel active downloads tied to this Activity
+        videoDownloadJobs.values.forEach { it.cancel() }
+        videoDownloadJobs.clear()
     }
 }

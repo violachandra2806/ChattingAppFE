@@ -1,12 +1,12 @@
 package com.chattingapp.ui.chat.adapter
 
 
-import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ListAdapter
@@ -17,7 +17,6 @@ import com.chattingapp.ui.chat.Message
 import com.chattingapp.ui.chat.WaveformView
 import com.chattingapp.ui.chat.ChatRoomActivity
 import com.bumptech.glide.Glide
-import com.chattingapp.ui.chat.VideoPlayerActivity
 
 private const val TYPE_DATE_HEADER = 0
 private const val TYPE_TEXT_IN = 1
@@ -30,8 +29,30 @@ private const val TYPE_VIDEO_OUT = 6
 class MessageAdapter(
     private val currentUserId: String,
     private val onPlayVoice: (Message, View) -> Unit,
-    private val onTranscribe: (Message) -> Unit
+    private val onTranscribe: (Message) -> Unit,
+    private val onOpenVideo: (Message) -> Unit
 ) : ListAdapter<ChatItem, RecyclerView.ViewHolder>(ChatItemDiffCallback()) {
+
+    data class VideoDownloadUiState(
+        val indeterminate: Boolean,
+        val progressPercent: Int?
+    )
+
+    private val videoDownloadStateByMessageId = mutableMapOf<String, VideoDownloadUiState>()
+
+    fun updateVideoDownloadState(messageId: String, state: VideoDownloadUiState?) {
+        if (messageId.isBlank()) return
+        if (state == null) {
+            videoDownloadStateByMessageId.remove(messageId)
+        } else {
+            videoDownloadStateByMessageId[messageId] = state
+        }
+
+        val pos = currentList.indexOfFirst { item ->
+            (item as? ChatItem.MessageItem)?.message?.messageId == messageId
+        }
+        if (pos != -1) notifyItemChanged(pos)
+    }
 
     override fun getItemViewType(position: Int): Int {
         return when (val item = getItem(position)) {
@@ -124,7 +145,7 @@ class MessageAdapter(
                 m.isTranscribing -> {
                     tvTranscript.visibility = View.GONE
                     tvAction.visibility = View.VISIBLE
-                    tvAction.text = "Sedang proses..."
+                    tvAction.text = itemView.context.getString(R.string.label_transcribing_in_progress)
                     tvAction.isEnabled = false
                     tvAction.alpha = 0.5f
                     tvAction.setOnClickListener(null)
@@ -132,7 +153,7 @@ class MessageAdapter(
                 else -> {
                     tvTranscript.visibility = View.GONE
                     tvAction.visibility = View.VISIBLE
-                    tvAction.text = "Transkrip"
+                    tvAction.text = itemView.context.getString(R.string.action_transcript)
                     tvAction.isEnabled = true
                     tvAction.alpha = 1.0f
                     tvAction.setOnClickListener {
@@ -184,6 +205,8 @@ class MessageAdapter(
         private val tvDuration: TextView = view.findViewById(R.id.tvVideoDuration)
         private val tvTime: TextView? = view.findViewById(R.id.tvMessageTime)
         private val btnPlay: ImageButton? = view.findViewById(R.id.btnPlayVideo)
+        private val progressDownload: ProgressBar? = view.findViewById(R.id.progressVideoDownload)
+        private val tvDownloadStatus: TextView? = view.findViewById(R.id.tvVideoDownloadStatus)
 
         fun bind(message: Message) {
             android.util.Log.d("VideoPlayer", "Binding video message: ${message.messageId}, url: ${message.mediaUrl}")
@@ -197,23 +220,31 @@ class MessageAdapter(
             tvDuration.text = message.durationSec?.let { String.format("%02d:%02d", it / 60, it % 60) } ?: ""
             tvTime?.text = message.sentAt // Only show time (HH:mm)
 
+            val downloadState = message.messageId.takeIf { it.isNotBlank() }?.let { videoDownloadStateByMessageId[it] }
+            if (downloadState != null) {
+                tvDownloadStatus?.visibility = View.VISIBLE
+                progressDownload?.visibility = View.VISIBLE
+                progressDownload?.isIndeterminate = downloadState.indeterminate
+
+                if (!downloadState.indeterminate && downloadState.progressPercent != null) {
+                    progressDownload?.progress = downloadState.progressPercent.coerceIn(0, 100)
+                    tvDownloadStatus?.text = itemView.context.getString(
+                        R.string.label_downloading_percent,
+                        downloadState.progressPercent.coerceIn(0, 100)
+                    )
+                } else {
+                    tvDownloadStatus?.text = itemView.context.getString(R.string.label_downloading)
+                }
+            } else {
+                tvDownloadStatus?.visibility = View.GONE
+                progressDownload?.visibility = View.GONE
+            }
+
             // Set click listener on the entire video item
             itemView.setOnClickListener {
                 android.util.Log.d("VideoPlayer", "Video clicked: ${message.messageId}, type: ${message.messageType}")
                 if (message.messageType == "video" && message.mediaUrl != null) {
-                    // Launch video player
-                    val intent = Intent(itemView.context, VideoPlayerActivity::class.java).apply {
-                        putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, message.mediaUrl)
-                        putExtra(VideoPlayerActivity.EXTRA_MESSAGE_ID, message.messageId)
-                        putExtra(VideoPlayerActivity.EXTRA_ROOM_ID, message.roomId)
-                        putExtra(VideoPlayerActivity.EXTRA_TRANSLATE_YN, message.translateYN ?: "N")
-                        putExtra(VideoPlayerActivity.EXTRA_FRAME_RATE, message.frameRate ?: 30)
-                        putExtra(VideoPlayerActivity.EXTRA_RESOLUTION, message.resolution ?: "")
-                        putExtra(VideoPlayerActivity.EXTRA_DURATION, (message.durationSec ?: 0) * 1000)
-                    }
-                    android.util.Log.d("VideoPlayer", "Launching VideoPlayerActivity with URL: ${message.mediaUrl}")
-                    android.util.Log.d("VideoPlayer", "Intent extras: ${intent.extras}")
-                    itemView.context.startActivity(intent)
+                    onOpenVideo(message)
                 } else {
                     android.util.Log.d("VideoPlayer", "Cannot launch: messageType=${message.messageType}, mediaUrl=${message.mediaUrl}")
                 }

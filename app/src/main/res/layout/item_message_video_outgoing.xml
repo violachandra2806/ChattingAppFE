@@ -40,6 +40,26 @@
         </FrameLayout>
 
         <TextView
+            android:id="@+id/tvVideoDownloadStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            android:visibility="gone"
+            android:text="@string/label_downloading" />
+
+        <ProgressBar
+            android:id="@+id/progressVideoDownload"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="6dp"
+            android:layout_marginTop="6dp"
+            android:progressTint="@color/white"
+            android:indeterminateTint="@color/white"
+            android:visibility="gone" />
+
+        <TextView
             android:id="@+id/tvVideoDuration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
