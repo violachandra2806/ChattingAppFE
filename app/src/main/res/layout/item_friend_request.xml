@@ -40,18 +40,24 @@
         <!-- Reject button -->
         <ImageView
             android:id="@+id/btnReject"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
             android:background="@drawable/bg_circle_red"
             android:src="@drawable/ic_close"
-            android:layout_marginEnd="8dp"/>
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="6dp"
+            android:layout_marginEnd="12dp"/>
 
         <!-- Accept button -->
         <ImageView
             android:id="@+id/btnAccept"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
             android:background="@drawable/bg_circle_green"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="6dp"
            android:src="@drawable/ic_check"/>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

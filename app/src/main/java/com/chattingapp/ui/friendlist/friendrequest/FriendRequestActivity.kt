@@ -42,7 +42,6 @@ class FriendRequestActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // Ambil user_id dari SharedPreferences
         val sharedPref = getSharedPreferences("UserData", Context.MODE_PRIVATE)
         val userId = sharedPref.getString("user_id", null)
 

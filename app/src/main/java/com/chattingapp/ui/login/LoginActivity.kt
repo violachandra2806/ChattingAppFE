@@ -31,13 +31,10 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var emailInput: EditText
     private lateinit var passwordInput: EditText
     private lateinit var loginButton: Button
-    private lateinit var googleLogin: LinearLayout
     private lateinit var registerText: TextView
     private lateinit var forgotPasswordText: TextView
     private lateinit var togglePasswordVisibility: ImageView
     private var isPasswordVisible = false
-
-    private lateinit var googleSignInClient: GoogleSignInClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,7 +43,6 @@ class LoginActivity : AppCompatActivity() {
         emailInput = findViewById(R.id.editTextEmailUsername)
         passwordInput = findViewById(R.id.editTextPassword)
         loginButton = findViewById(R.id.buttonLogin)
-        googleLogin = findViewById(R.id.buttonGoogle)
         registerText = findViewById(R.id.textRegister)
         forgotPasswordText = findViewById(R.id.forgotPassword)
         togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility)
@@ -75,13 +71,10 @@ class LoginActivity : AppCompatActivity() {
             loginUser(email, password)
         }
 
-        googleLogin.setOnClickListener { signInWithGoogle() }
         registerText.setOnClickListener { startActivity(Intent(this, RegisterActivity::class.java)) }
         forgotPasswordText.setOnClickListener {
             startActivity(Intent(this, ForgotPasswordActivity::class.java))
         }
-
-        setupGoogleSignIn()
     }
 
     private fun togglePasswordVisibility() {
@@ -173,18 +166,6 @@ class LoginActivity : AppCompatActivity() {
         )
 
         Volley.newRequestQueue(this).add(request)
-    }
-
-    private fun setupGoogleSignIn() {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestEmail()
-            .build()
-        googleSignInClient = GoogleSignIn.getClient(this, gso)
-    }
-
-    private fun signInWithGoogle() {
-        val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(signInIntent, RC_SIGN_IN)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

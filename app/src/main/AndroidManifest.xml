@@ -94,6 +94,18 @@
             android:name=".ui.friendlist.addfriend.AddFriendActivity"
             android:exported="false" />
 
+        <!-- Profile -->
+        <activity
+            android:name=".ui.profile.ProfileActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ChattingApp" />
+
+        <!-- Edit Bio -->
+        <activity
+            android:name=".ui.bio.EditBioActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ChattingApp" />
+
         <!-- ➕ Video -->
         <activity
             android:name=".ui.chat.MediaPreviewActivity"

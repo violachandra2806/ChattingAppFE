@@ -88,61 +88,6 @@
             android:textColor="@color/white"
             android:layout_marginBottom="49dp" />
 
-        <!-- Divider -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="25dp">
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"
-                android:background="#40000000" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="  Atau coba metode lain  "
-                android:textSize="12sp"
-                android:textColor="#40000000" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"
-                android:background="#40000000" />
-        </LinearLayout>
-
-        <!-- Google Login Button -->
-        <LinearLayout
-            android:id="@+id/buttonGoogle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="@drawable/bg_button_white"
-            android:padding="12dp"
-            android:gravity="center"
-            android:layout_marginBottom="25dp"
-            android:clickable="true"
-            android:focusable="true">
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/ic_google_logo"
-                android:layout_marginEnd="8dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Masuk dengan Google"
-                android:textColor="#000000"
-                android:textSize="14sp" />
-        </LinearLayout>
-
         <!-- Register -->
         <LinearLayout
             android:layout_width="match_parent"

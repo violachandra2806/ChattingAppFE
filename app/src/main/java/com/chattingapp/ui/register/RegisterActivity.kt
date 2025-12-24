@@ -24,14 +24,12 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var editTextEmail: EditText
     private lateinit var editTextUsername: EditText
     private lateinit var editTextDateOfBirth: EditText
-    private lateinit var editTextPassword: EditText
-    private lateinit var editTextConfirmPassword: EditText
+    private lateinit var passwordInput: EditText
+    private lateinit var confirmPasswordInput: EditText
     private lateinit var togglePasswordVisibility: ImageView
     private lateinit var toggleConfirmPasswordVisibility: ImageView
     private lateinit var buttonRegister: Button
     private lateinit var alreadyHaveAccount: TextView
-    private lateinit var googleLogin: LinearLayout
-
     private var isPasswordVisible = false
     private var isConfirmPasswordVisible = false
 
@@ -43,24 +41,42 @@ class RegisterActivity : AppCompatActivity() {
         editTextEmail = findViewById(R.id.editTextEmail)
         editTextUsername = findViewById(R.id.editTextUsername)
         editTextDateOfBirth = findViewById(R.id.editTextDateOfBirth)
-        editTextPassword = findViewById(R.id.editTextPassword)
-        editTextConfirmPassword = findViewById(R.id.confirmTextPassword)
+        passwordInput = findViewById(R.id.editTextPassword)
+        confirmPasswordInput = findViewById(R.id.confirmTextPassword)
         togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility)
         toggleConfirmPasswordVisibility = findViewById(R.id.toggleConfirmPasswordVisibility)
         buttonRegister = findViewById(R.id.buttonRegister)
         alreadyHaveAccount = findViewById(R.id.alreadyHaveAccount)
-        googleLogin = findViewById(R.id.buttonGoogle)
+
+        passwordInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                togglePasswordVisibility.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
+            }
+        })
+
+        confirmPasswordInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                toggleConfirmPasswordVisibility.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
+            }
+        })
+
+        togglePasswordVisibility.setOnClickListener {
+            isPasswordVisible = !isPasswordVisible
+            togglePasswordVisibility()
+        }
+
+        toggleConfirmPasswordVisibility.setOnClickListener {
+            isConfirmPasswordVisible = !isConfirmPasswordVisible
+            toggleConfirmPasswordVisibility()
+        }
+
 
         // 🔹 Date picker
         editTextDateOfBirth.setOnClickListener { showDatePickerDialog() }
-
-        // 🔹 Password visibility toggle
-        setupPasswordToggle(editTextPassword, togglePasswordVisibility) { visible ->
-            isPasswordVisible = visible
-        }
-        setupPasswordToggle(editTextConfirmPassword, toggleConfirmPasswordVisibility) { visible ->
-            isConfirmPasswordVisible = visible
-        }
 
         buttonRegister.setOnClickListener { handleRegister() }
 
@@ -68,40 +84,30 @@ class RegisterActivity : AppCompatActivity() {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
         }
-
-        // 🔹 Google login (belum diimplementasi)
-        googleLogin.setOnClickListener {
-            Toast.makeText(this, "Google login belum diimplementasi", Toast.LENGTH_SHORT).show()
-        }
     }
 
-    private fun setupPasswordToggle(
-        passwordField: EditText,
-        toggleView: ImageView,
-        updateVisibilityState: (Boolean) -> Unit
-    ) {
-        passwordField.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                toggleView.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
-            }
-        })
-
-        toggleView.setOnClickListener {
-            val currentlyVisible = passwordField.transformationMethod == null
-            if (currentlyVisible) {
-                passwordField.transformationMethod = PasswordTransformationMethod.getInstance()
-                toggleView.setImageResource(R.drawable.ic_visibility_off)
-            } else {
-                passwordField.transformationMethod = null
-                toggleView.setImageResource(R.drawable.ic_visibility_on)
-            }
-            passwordField.setSelection(passwordField.text.length)
-            updateVisibilityState(!currentlyVisible)
+    private fun togglePasswordVisibility() {
+        if (isPasswordVisible) {
+            passwordInput.inputType = android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+            togglePasswordVisibility.setImageResource(R.drawable.ic_visibility_on)
+        } else {
+            passwordInput.inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                    android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            togglePasswordVisibility.setImageResource(R.drawable.ic_visibility_off)
         }
+        passwordInput.setSelection(passwordInput.text.length)
+    }
 
-        toggleView.visibility = if (passwordField.text.isNullOrEmpty()) View.GONE else View.VISIBLE
+    private fun toggleConfirmPasswordVisibility() {
+        if (isConfirmPasswordVisible) {
+            confirmPasswordInput.inputType = android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+            toggleConfirmPasswordVisibility.setImageResource(R.drawable.ic_visibility_on)
+        } else {
+            confirmPasswordInput.inputType = android.text.InputType.TYPE_CLASS_TEXT or
+                    android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+            toggleConfirmPasswordVisibility.setImageResource(R.drawable.ic_visibility_off)
+        }
+        confirmPasswordInput.setSelection(confirmPasswordInput.text.length)
     }
 
     private fun showDatePickerDialog() {
@@ -130,8 +136,8 @@ class RegisterActivity : AppCompatActivity() {
         val email = editTextEmail.text.toString().trim()
         val username = editTextUsername.text.toString().trim()
         val dateOfBirth = editTextDateOfBirth.text.toString().trim()
-        val password = editTextPassword.text.toString()
-        val confirmPassword = editTextConfirmPassword.text.toString()
+        val password = passwordInput.text.toString()
+        val confirmPassword = confirmPasswordInput.text.toString()
 
         if (email.isEmpty() || username.isEmpty() || dateOfBirth.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             Toast.makeText(this, "Semua field harus diisi", Toast.LENGTH_SHORT).show()
@@ -144,12 +150,12 @@ class RegisterActivity : AppCompatActivity() {
         }
 
         if (password.length < 8) {
-            editTextPassword.error = "Password minimal 8 karakter"
+            passwordInput.error = "Password minimal 8 karakter"
             return
         }
 
         if (password != confirmPassword) {
-            editTextConfirmPassword.error = "Konfirmasi password tidak cocok"
+            confirmPasswordInput.error = "Konfirmasi password tidak cocok"
             return
         }
 

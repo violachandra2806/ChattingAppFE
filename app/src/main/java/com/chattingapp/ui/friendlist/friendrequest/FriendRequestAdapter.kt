@@ -18,6 +18,10 @@ class FriendRequestAdapter(
         val username: TextView = itemView.findViewById(R.id.username)
         val btnAccept: ImageView = itemView.findViewById(R.id.btnAccept)
         val btnReject: ImageView = itemView.findViewById(R.id.btnReject)
+
+        init {
+            itemView.setOnClickListener(null)
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RequestViewHolder {

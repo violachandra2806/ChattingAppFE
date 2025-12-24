@@ -37,6 +37,7 @@ class MediaPreviewActivity : AppCompatActivity() {
     private var senderId: String = ""
     private var videoFileName: String = ""
     private var messageId: String = ""
+    private var videoDurationSec: Int = 0
 
     private val subtitleItems = mutableListOf<SubtitleItem>()
     private val handler = Handler(Looper.getMainLooper())
@@ -127,6 +128,7 @@ class MediaPreviewActivity : AppCompatActivity() {
             val duration = mp.duration
             binding.seekBar.max = duration  // Set actual duration as max
             binding.tvDuration.text = formatTime(duration)
+            videoDurationSec = duration / 1000
 
             // IMPORTANT: Don't auto-start, let user control
             binding.btnPlayPause.setImageResource(android.R.drawable.ic_media_play)
@@ -318,7 +320,11 @@ class MediaPreviewActivity : AppCompatActivity() {
     private suspend fun uploadVideoNote(): JSONObject? {
         return withContext(Dispatchers.IO) {
             try {
-                val client = okhttp3.OkHttpClient()
+                val client = okhttp3.OkHttpClient.Builder()
+                    .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                    .writeTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
 
                 val requestBody = okhttp3.MultipartBody.Builder()
                     .setType(okhttp3.MultipartBody.FORM)
@@ -578,6 +584,7 @@ class MediaPreviewActivity : AppCompatActivity() {
                         put("resolution", resolution)
                         put("frame_rate", frameRate)
                         put("translate_yn", "N")
+                        put("duration_sec", videoDurationSec)
 
                         // Add message_id if we have it (from upload or previous translation)
                         if (messageId.isNotEmpty()) {

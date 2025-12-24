@@ -21,7 +21,6 @@ class ForgotPasswordActivity : AppCompatActivity() {
     private lateinit var editTextEmail: EditText
     private lateinit var buttonSendInstructions: Button
     private lateinit var textViewInstructions: TextView
-    private lateinit var googleLogin: LinearLayout
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,7 +30,6 @@ class ForgotPasswordActivity : AppCompatActivity() {
         backIcon = findViewById(R.id.backIcon)
         editTextEmail = findViewById(R.id.editTextEmail)
         buttonSendInstructions = findViewById(R.id.buttonVerification)
-        googleLogin = findViewById(R.id.buttonGoogle)
 
         backIcon.setOnClickListener {
             finish()
@@ -43,10 +41,6 @@ class ForgotPasswordActivity : AppCompatActivity() {
 
         buttonSendInstructions.setOnClickListener {
             handleSendInstructions()
-        }
-
-        googleLogin.setOnClickListener {
-            Toast.makeText(this, "Google login belum diimplementasi", Toast.LENGTH_SHORT).show()
         }
     }
 
