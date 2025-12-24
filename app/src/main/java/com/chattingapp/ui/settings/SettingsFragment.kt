@@ -86,7 +86,6 @@ class SettingsFragment : Fragment() {
         }
 
         btnEditBio?.setOnClickListener {
-            Toast.makeText(requireContext(), "Fitur Edit Bio akan segera hadir", Toast.LENGTH_SHORT).show()
             val intent = Intent(requireContext(), EditBioActivity::class.java)
             startActivity(intent)
         }
