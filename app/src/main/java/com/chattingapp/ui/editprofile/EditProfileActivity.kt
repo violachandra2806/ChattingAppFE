@@ -42,7 +42,8 @@ class EditProfileActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit_profile)
 
-        prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        // Use the same preference file that LoginActivity writes to
+        prefs = getSharedPreferences("UserData", MODE_PRIVATE)
 
         backIcon = findViewById(R.id.backIcon)
         profileImage = findViewById(R.id.profileImage)

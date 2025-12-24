@@ -21,4 +21,24 @@
         <!-- <item name="fontFamily">@font/poppins_regular</item> -->
 
     </style>
+
+    <!-- MaterialComponents theme variant (needed for MaterialButton, TextInputLayout, etc.) -->
+    <style name="Theme.ChattingApp.Material" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+
+        <!-- Primary brand color -->
+        <item name="colorPrimary">@color/light_purple</item>
+        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorOnPrimary">@color/white</item>
+
+        <!-- Secondary brand color -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">@color/black</item>
+
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+
+        <!-- Apply Poppins Regular font globally -->
+        <item name="android:fontFamily">@font/poppins_regular</item>
+    </style>
 </resources>
