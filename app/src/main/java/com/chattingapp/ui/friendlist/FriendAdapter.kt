@@ -6,8 +6,8 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import com.chattingapp.R
+import com.chattingapp.utils.AvatarUtils
 
 class FriendAdapter(
     private var displayedList: List<Friend>,
@@ -30,11 +30,8 @@ class FriendAdapter(
         val friend = displayedList[position]
         holder.username.text = friend.username
 
-        // Load profile picture
-        Glide.with(holder.itemView.context)
-            .load(friend.profilePicture)
-            .placeholder(R.drawable.ic_person_placeholder)
-            .into(holder.profileImage)
+        // Load profile picture; fallback to initial with random (stable) background
+        AvatarUtils.loadInto(holder.profileImage, friend.profilePicture, friend.username)
 
         holder.chatIcon.setOnClickListener {
             onChatClick(friend)

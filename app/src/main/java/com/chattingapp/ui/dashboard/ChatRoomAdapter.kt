@@ -6,8 +6,8 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import com.chattingapp.R
+import com.chattingapp.utils.AvatarUtils
 
 class ChatRoomAdapter(
     private val chatRooms: List<ChatRoom>,
@@ -35,11 +35,8 @@ class ChatRoomAdapter(
         holder.tvUnreadCount.text = chatRoom.unreadCount.toString()
         holder.tvUnreadCount.visibility = if (chatRoom.unreadCount > 0) View.VISIBLE else View.GONE
 
-        // Load profile picture with Glide or Picasso
-        Glide.with(holder.itemView.context)
-            .load(chatRoom.profilePicture)
-            .placeholder(R.drawable.ic_person_placeholder)
-            .into(holder.profileImage)
+        // Load profile picture; fallback to initial with random (stable) background
+        AvatarUtils.loadInto(holder.profileImage, chatRoom.profilePicture, chatRoom.username)
 
         holder.itemView.setOnClickListener {
             onClick(chatRoom)

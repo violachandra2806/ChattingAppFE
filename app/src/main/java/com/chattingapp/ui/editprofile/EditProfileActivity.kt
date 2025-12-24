@@ -16,6 +16,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.chattingapp.BuildConfig
 import com.chattingapp.R
 import com.chattingapp.ui.forgotpassword.ForgotPasswordActivity
+import android.util.Log
+import com.chattingapp.utils.AvatarUtils
 import org.json.JSONObject
 import java.io.InputStream
 import java.net.HttpURLConnection
@@ -97,7 +99,8 @@ class EditProfileActivity : AppCompatActivity() {
     private fun fetchUserDetails(userId: String) {
         Thread {
             try {
-                val url = URL("${BuildConfig.BASE_URL}getuserdetailsbyid?user_id=$userId")
+                val base = if (BuildConfig.BASE_URL.endsWith("/")) BuildConfig.BASE_URL else BuildConfig.BASE_URL + "/"
+                val url = URL("${base}getuserdetailsbyid?user_id=$userId")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "GET"
                 conn.connectTimeout = 15000
@@ -106,12 +109,49 @@ class EditProfileActivity : AppCompatActivity() {
                 val code = conn.responseCode
                 val stream: InputStream = if (code in 200..299) conn.inputStream else conn.errorStream
                 val body = stream.bufferedReader().use { it.readText() }
-                val json = JSONObject(body)
+                val root = JSONObject(body)
+                Log.d("EditProfile", "getuserdetailsbyid response: $root")
 
-                val profilePicture = if (json.has("profile_picture")) json.getString("profile_picture") else ""
-                val username = if (json.has("username")) json.getString("username") else ""
-                val userEmail = if (json.has("user_email")) json.getString("user_email") else ""
-                val dob = if (json.has("dob")) json.getString("dob") else ""
+                val userObj = if (root.has("data") && root.optJSONArray("data") != null && root.optJSONArray("data")!!.length() > 0) {
+                    root.optJSONArray("data")!!.getJSONObject(0)
+                } else {
+                    root
+                }
+
+                val username = userObj.optString("username", "").trim()
+                val userEmail = userObj.optString("user_email", "").trim()
+
+                fun looksLikeUrl(s: String?): Boolean {
+                    val v = s?.trim().orEmpty()
+                    return v.startsWith("http://", ignoreCase = true) || v.startsWith("https://", ignoreCase = true)
+                }
+
+                fun looksLikeDateLikeString(s: String?): Boolean {
+                    val v = s?.trim().orEmpty()
+                    if (v.isBlank()) return false
+                    if (v.equals("null", true)) return false
+                    if (v.equals("true", true) || v.equals("false", true)) return false
+                    if (looksLikeUrl(v)) return false
+                    // Your API returns strings like "Fri, 11 Jul 2025 00:00:00 GMT"
+                    return v.contains("GMT", ignoreCase = true) || v.contains(",") || v.contains("-")
+                }
+
+                val rawDob = userObj.optString("dob", "").trim()
+                val dob = if (looksLikeDateLikeString(rawDob)) {
+                    rawDob
+                } else {
+                    // Some responses appear to have fields swapped; use bio as fallback if it looks like a date
+                    val rawBio = userObj.optString("bio", "").trim()
+                    if (looksLikeDateLikeString(rawBio)) rawBio else rawDob
+                }
+
+                val profilePictureCandidate = userObj.optString("profile_picture", "").trim()
+                val blockedUserCandidate = userObj.optString("blocked_user", "").trim()
+                val profilePicture = when {
+                    looksLikeUrl(profilePictureCandidate) -> profilePictureCandidate
+                    looksLikeUrl(blockedUserCandidate) -> blockedUserCandidate
+                    else -> ""
+                }
 
                 runOnUiThread {
                     originalUsername = username
@@ -122,7 +162,8 @@ class EditProfileActivity : AppCompatActivity() {
                     editEmail.setText(userEmail)
                     editDob.setText(dob)
 
-                    if (profilePicture.isNotBlank()) loadImageFromUrl(profilePicture, profileImage)
+                    // Load profile picture; fallback to initial with random (stable) background
+                    AvatarUtils.loadInto(profileImage, profilePicture, username)
                     toggleSaveIfChanged()
                 }
 

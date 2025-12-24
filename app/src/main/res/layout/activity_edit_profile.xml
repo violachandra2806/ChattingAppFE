@@ -49,7 +49,7 @@
             android:background="@drawable/circle_background"
             android:clipToOutline="true"
             android:outlineProvider="background"
-            android:padding="4dp" />
+            android:padding="0dp" />
 
         <EditText
             android:id="@+id/editUsername"
