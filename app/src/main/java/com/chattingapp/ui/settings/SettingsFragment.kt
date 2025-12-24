@@ -12,6 +12,7 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.android.volley.Request
 import com.android.volley.toolbox.JsonObjectRequest
@@ -20,6 +21,7 @@ import com.chattingapp.BuildConfig
 import com.chattingapp.R
 import com.chattingapp.ui.bio.EditBioActivity
 import com.chattingapp.ui.editprofile.EditProfileActivity
+import com.chattingapp.ui.login.LoginActivity
 import com.chattingapp.utils.AvatarUtils
 
 class SettingsFragment : Fragment() {
@@ -34,6 +36,8 @@ class SettingsFragment : Fragment() {
     private var btnEditProfile: LinearLayout? = null
     private var btnEditBio: LinearLayout? = null
     private var btnLogout: LinearLayout? = null
+
+    private var loadingOverlay: View? = null
 
     private lateinit var sharedPreferences: SharedPreferences
 
@@ -59,6 +63,8 @@ class SettingsFragment : Fragment() {
         btnEditBio = view.findViewById(R.id.layoutEditBio)
         btnLogout = view.findViewById(R.id.layoutLogout)
 
+        loadingOverlay = view.findViewById(R.id.loadingOverlay)
+
         sharedPreferences = requireContext().getSharedPreferences("UserData", Context.MODE_PRIVATE)
         val userId = sharedPreferences.getString("user_id", null)
 
@@ -66,6 +72,7 @@ class SettingsFragment : Fragment() {
             fetchUserProfile(userId)
         } else {
             Toast.makeText(requireContext(), "User ID tidak ditemukan. Silakan login kembali.", Toast.LENGTH_SHORT).show()
+            setLoading(false)
             logout()
         }
 
@@ -85,11 +92,22 @@ class SettingsFragment : Fragment() {
         }
 
         btnLogout?.setOnClickListener {
-            logout()
+            showLogoutDialog()
         }
     }
 
+    private fun showLogoutDialog() {
+        if (!isAdded) return
+        AlertDialog.Builder(requireContext())
+            .setTitle("Konfirmasi")
+            .setMessage("Are you sure to log out?")
+            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
+            .setPositiveButton("Log out") { _, _ -> doLogout() }
+            .show()
+    }
+
     private fun fetchUserProfile(userId: String) {
+        setLoading(true)
         val base = if (BuildConfig.BASE_URL.endsWith("/")) BuildConfig.BASE_URL else BuildConfig.BASE_URL + "/"
         val url = "${base}getuserdetailsbyid?user_id=$userId"
 
@@ -149,30 +167,44 @@ class SettingsFragment : Fragment() {
 
                         // (Optional) If your layout later uses an ImageView for profile picture, you can load profilePictureUrl there.
                         Log.d("SettingsFragment", "Profile loaded. user_id=$userId username=$username email=$email dob=$dob profilePic=$profilePictureUrl")
+                        setLoading(false)
                     } else {
                         Log.e("SettingsFragment", "Failed status: $status")
                         Toast.makeText(requireContext(), "Gagal memuat profil", Toast.LENGTH_SHORT).show()
+                        setLoading(false)
                     }
                 } catch (e: Exception) {
                     Log.e("SettingsFragment", "Error parsing JSON", e)
+                    setLoading(false)
                 }
             },
             { error ->
                 Log.e("SettingsFragment", "Volley Error: ${error.message}")
                 Toast.makeText(requireContext(), "Terjadi kesalahan jaringan", Toast.LENGTH_SHORT).show()
+                setLoading(false)
             }
         )
 
         Volley.newRequestQueue(requireContext()).add(request)
     }
 
-    private fun logout() {
+    private fun setLoading(isLoading: Boolean) {
+        loadingOverlay?.visibility = if (isLoading) View.VISIBLE else View.GONE
+    }
+
+    private fun doLogout() {
         sharedPreferences.edit().clear().apply()
         Toast.makeText(requireContext(), "Berhasil keluar", Toast.LENGTH_SHORT).show()
-        // val intent = Intent(requireContext(), LoginActivity::class.java)
-        // intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        // startActivity(intent)
-        requireActivity().finish()
+
+        val intent = Intent(requireContext(), LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+    }
+
+    private fun logout() {
+        // Backward-compatible helper for existing call sites.
+        // Used when we must force the user back to Login.
+        doLogout()
     }
 
     override fun onDestroyView() {
@@ -186,5 +218,6 @@ class SettingsFragment : Fragment() {
         btnEditProfile = null
         btnEditBio = null
         btnLogout = null
+        loadingOverlay = null
     }
 }

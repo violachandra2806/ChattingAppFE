@@ -17,7 +17,8 @@
         android:text="@string/label_friend_requests"
         android:textColor="@android:color/black"
         android:textStyle="bold"
-        android:textSize="24sp" />
+        android:textSize="24sp"
+        android:gravity="center" />
 
 
     <androidx.recyclerview.widget.RecyclerView

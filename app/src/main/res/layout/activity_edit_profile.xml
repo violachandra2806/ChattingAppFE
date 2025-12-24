@@ -3,8 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:paddingHorizontal="24dp"
-    android:paddingTop="16dp"
+    android:padding="24dp"
     android:background="@color/white">
 
     <LinearLayout
@@ -22,7 +21,7 @@
                 android:id="@+id/backIcon"
                 android:layout_width="35dp"
                 android:layout_height="35dp"
-                android:src="@drawable/ic_back"
+                android:src="@drawable/ic_back_black"
                 android:contentDescription="@string/cd_back"
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
@@ -56,7 +55,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/hint_username_simple"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="16dp"
             android:textSize="14sp" />
 
         <EditText
@@ -65,7 +64,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/hint_email_simple"
             android:inputType="textEmailAddress"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="16dp"
             android:textSize="14sp" />
 
         <EditText
@@ -73,7 +72,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/hint_dob_yyyy_mm_dd"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="16dp"
             android:textSize="14sp" />
 
         <EditText
@@ -84,7 +83,13 @@
             android:layout_marginBottom="20dp"
             android:textSize="14sp"
             android:inputType="textPassword"
-            android:focusable="false" />
+            android:focusable="false"
+            android:cursorVisible="false"
+            android:clickable="true"
+            android:longClickable="false"
+            android:enabled="true"
+            android:drawableEnd="@drawable/ic_lock_lock_black"
+            android:drawablePadding="10dp" />
 
         <Button
             android:id="@+id/buttonSave"

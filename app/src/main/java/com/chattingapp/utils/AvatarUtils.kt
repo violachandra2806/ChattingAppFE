@@ -13,7 +13,6 @@ import com.chattingapp.R
 object AvatarUtils {
 
     private val avatarColorResIds = intArrayOf(
-        R.color.light_purple,
         R.color.lighter_purple,
         R.color.fade_purple,
         R.color.light_blue,

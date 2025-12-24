@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import android.view.View
 import com.chattingapp.R
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -22,6 +23,7 @@ class AddFriendActivity : AppCompatActivity() {
 
     private lateinit var adapter: AddFriendAdapter
     private lateinit var textSearchInfo: TextView
+    private var loadingOverlay: View? = null
 
     private val currentUserId: String by lazy {
         val prefs = getSharedPreferences("UserData", MODE_PRIVATE)
@@ -45,6 +47,7 @@ class AddFriendActivity : AppCompatActivity() {
         val iconSend = findViewById<ImageView>(R.id.iconSendSearchUsername)
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewResults)
         textSearchInfo = findViewById(R.id.textSearchInfo)
+        loadingOverlay = findViewById(R.id.loadingOverlay)
 
         btnBack.setOnClickListener { finish() }
 
@@ -81,6 +84,7 @@ class AddFriendActivity : AppCompatActivity() {
     }
 
     private fun searchFriendByUsername(keyword: String) {
+        runOnUiThread { setLoading(true) }
         thread {
             try {
                 val url = URL("${BuildConfig.BASE_URL}searchfriendbyusername?user_id=$currentUserId&keyword=$keyword&limit=10&page=1")
@@ -93,6 +97,7 @@ class AddFriendActivity : AppCompatActivity() {
                 if (responseCode != HttpURLConnection.HTTP_OK) {
                     runOnUiThread {
                         Toast.makeText(this, getString(R.string.msg_server_error_with_code, responseCode), Toast.LENGTH_SHORT).show()
+                        setLoading(false)
                     }
                     return@thread
                 }
@@ -106,6 +111,7 @@ class AddFriendActivity : AppCompatActivity() {
                         textSearchInfo.text = message
                         textSearchInfo.visibility = TextView.VISIBLE
                         adapter.updateList(mutableListOf())
+                        setLoading(false)
                     }
                     return@thread
                 }
@@ -133,15 +139,21 @@ class AddFriendActivity : AppCompatActivity() {
                         adapter.updateList(friends)
                     }
                     textSearchInfo.visibility = TextView.VISIBLE
+                    setLoading(false)
                 }
 
             } catch (e: Exception) {
                 e.printStackTrace()
                 runOnUiThread {
                     Toast.makeText(this, getString(R.string.msg_search_friend_failed, e.message ?: ""), Toast.LENGTH_SHORT).show()
+                    setLoading(false)
                 }
             }
         }
+    }
+
+    private fun setLoading(isLoading: Boolean) {
+        loadingOverlay?.visibility = if (isLoading) View.VISIBLE else View.GONE
     }
 
 

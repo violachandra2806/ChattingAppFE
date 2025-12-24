@@ -12,19 +12,21 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
+        android:padding="30dp"
         android:text="@string/label_chat_header"
-        android:textColor="@color/light_purple"
-        android:textSize="30sp"
+        android:textColor="@color/black"
+        android:textSize="24sp"
         android:textStyle="bold"
-        android:gravity="center_vertical"/>
+        android:gravity="center"/>
 
     <!-- Search Section -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="8dp"
-        android:background="@color/grey_background">
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="8dp"
+        android:paddingVertical="6dp"
+        android:background="@android:color/transparent">
 
         <EditText
             android:id="@+id/searchChat"
@@ -44,7 +46,7 @@
             app:layout_constraintEnd_toStartOf="@+id/btnSearch"
             app:layout_constraintHorizontal_bias="0.0"
             android:layout_marginEnd="8dp"/>
-
+ 
         <Button
             android:id="@+id/btnSearch"
             android:layout_width="wrap_content"

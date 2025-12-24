@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
     android:background="@android:color/white">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="@android:color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,12 +21,13 @@
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Profile"
-            android:textSize="20sp"
+            android:text="@string/title_setting"
+            android:textSize="24sp"
             android:textStyle="bold"
+            android:padding="30dp"
             android:textColor="@android:color/black"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="24dp" />
+            android:layout_gravity="center"
+            />
 
         <!-- Profile Picture -->
         <TextView
@@ -42,7 +48,6 @@
             android:id="@+id/etUsername"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="example123"
             android:enabled="false"
             android:textSize="14sp"
             android:backgroundTint="#40000000"
@@ -53,7 +58,6 @@
             android:id="@+id/etEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="example@example.com"
             android:enabled="false"
             android:textSize="14sp"
             android:backgroundTint="#40000000"
@@ -64,7 +68,6 @@
             android:id="@+id/etDob"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="26 May 2001"
             android:enabled="false"
             android:textSize="14sp"
             android:backgroundTint="#40000000"
@@ -79,24 +82,26 @@
             android:enabled="false"
             android:inputType="textPassword"
             android:textSize="14sp"
+            android:textColorHint="#9E9E9E"
             android:backgroundTint="#40000000"
+            android:drawableEnd="@drawable/ic_lock_lock"
+            android:drawablePadding="10dp"
             android:layout_marginBottom="32dp" />
 
         <!-- Divider -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#EEEEEE"
-            android:layout_marginBottom="16dp" />
+            android:background="#EEEEEE" />
 
         <!-- Edit Profile -->
         <LinearLayout
             android:id="@+id/layoutEditProfile"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="60dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingHorizontal="8dp">
+            android:paddingHorizontal="16dp">
 
             <ImageView
                 android:layout_width="14dp"
@@ -107,9 +112,12 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Edit Profile"
-                android:textSize="14sp"
-                android:layout_marginStart="16dp" />
+                android:text="@string/title_edit_profile"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:includeFontPadding="false" />
 
             <ImageView
                 android:layout_width="16dp"
@@ -117,14 +125,25 @@
                 android:src="@drawable/ic_arrow_right2" />
         </LinearLayout>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#EEEEEE"
+            android:layout_marginBottom="15dp"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#EEEEEE" />
+
         <!-- Edit Bio -->
         <LinearLayout
             android:id="@+id/layoutEditBio"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="60dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingHorizontal="8dp">
+            android:paddingHorizontal="16dp">
 
             <ImageView
                 android:layout_width="18dp"
@@ -136,8 +155,11 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Edit Bio"
-                android:textSize="14sp"
-                android:layout_marginStart="16dp" />
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:includeFontPadding="false" />
 
             <ImageView
                 android:layout_width="16dp"
@@ -145,14 +167,25 @@
                 android:src="@drawable/ic_arrow_right2" />
         </LinearLayout>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#EEEEEE"
+            android:layout_marginBottom="15dp"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#EEEEEE" />
+
         <!-- Logout -->
         <LinearLayout
             android:id="@+id/layoutLogout"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="60dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingHorizontal="8dp">
+            android:paddingHorizontal="16dp">
 
             <ImageView
                 android:layout_width="18dp"
@@ -163,9 +196,12 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Log out"
-                android:textSize="14sp"
-                android:layout_marginStart="16dp" />
+                android:text="Keluar"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:includeFontPadding="false" />
 
             <ImageView
                 android:layout_width="16dp"
@@ -173,5 +209,27 @@
                 android:src="@drawable/ic_arrow_right2" />
         </LinearLayout>
 
-    </LinearLayout>
-</ScrollView>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#EEEEEE" />
+
+        </LinearLayout>
+    </ScrollView>
+
+    <FrameLayout
+        android:id="@+id/loadingOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/grey_date_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+    </FrameLayout>
+
+</FrameLayout>

@@ -59,7 +59,7 @@ class EditProfileActivity : AppCompatActivity() {
         editPassword.isEnabled = false
         editPassword.setText(getString(R.string.placeholder_password_mask))
 
-        backIcon.setOnClickListener { finish() }
+        backIcon.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
         buttonSave.isEnabled = false
         buttonSave.alpha = 0.5f

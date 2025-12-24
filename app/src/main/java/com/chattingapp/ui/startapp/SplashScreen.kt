@@ -2,14 +2,13 @@ package com.chattingapp.ui.startapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.chattingapp.R
+import com.chattingapp.ui.dashboard.DashboardActivity
 
 class SplashScreen : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,7 +48,15 @@ class SplashScreen : AppCompatActivity() {
             override fun onAnimationStart(animation: Animation?) {}
 
             override fun onAnimationEnd(animation: Animation?) {
-                startActivity(Intent(this@SplashScreen, StartAppActivity::class.java))
+                val prefs = getSharedPreferences("UserData", MODE_PRIVATE)
+                val userId = prefs.getString("user_id", null)
+                val next = if (!userId.isNullOrBlank()) {
+                    Intent(this@SplashScreen, DashboardActivity::class.java)
+                } else {
+                    Intent(this@SplashScreen, StartAppActivity::class.java)
+                }
+                next.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(next)
                 finish()
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
             }

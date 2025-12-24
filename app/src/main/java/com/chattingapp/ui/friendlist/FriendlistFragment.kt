@@ -263,7 +263,9 @@ class FriendListFragment : Fragment() {
     }
 
     private fun loadFriendRequestCount(userId: String) {
-        val url = "${BuildConfig.BASE_URL}getfriendrequests?receiver=$userId&limit=1&page=1"
+        // Use a sufficiently large limit because some backends return `count` == returned data size.
+        // We still prefer the server-provided `count` field when present.
+        val url = "${BuildConfig.BASE_URL}getfriendrequests?receiver=$userId&limit=50&page=1"
         val queue = requestQueue ?: return
 
         val jsonObjectRequest = JsonObjectRequest(
@@ -274,7 +276,17 @@ class FriendListFragment : Fragment() {
                 if (!isAdded) return@Listener
                 try {
                     if (response.getString("status") == "success") {
-                        val count = response.optInt("count", 0)
+                        val countFromResponse = when (val raw = response.opt("count")) {
+                            is Number -> raw.toInt()
+                            is String -> raw.toIntOrNull() ?: 0
+                            else -> 0
+                        }
+                        val count = if (countFromResponse > 0) {
+                            countFromResponse
+                        } else {
+                            // Fallback if backend doesn't provide count or sends a non-int.
+                            response.optJSONArray("data")?.length() ?: 0
+                        }
                         badge?.text = count.toString()
                         badge?.visibility = if (count > 0) View.VISIBLE else View.GONE
                     }

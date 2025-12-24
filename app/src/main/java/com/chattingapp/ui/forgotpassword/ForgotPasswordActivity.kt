@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.chattingapp.BuildConfig
 import com.chattingapp.R
 import com.chattingapp.ui.login.LoginActivity
+import com.chattingapp.ui.register.RegisterActivity
 import org.json.JSONObject
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
@@ -30,7 +31,8 @@ class ForgotPasswordActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_forgot_password)
 
-        prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        // Same prefs as login/session
+        prefs = getSharedPreferences("UserData", MODE_PRIVATE)
 
         backIcon = findViewById(R.id.backIcon)
         editTextEmail = findViewById(R.id.editTextEmail)
@@ -39,18 +41,16 @@ class ForgotPasswordActivity : AppCompatActivity() {
         textNoAccount = findViewById(R.id.textNoAccount)
 
         backIcon.setOnClickListener {
-            finish()
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            startActivity(intent)
             onBackPressedDispatcher.onBackPressed()
         }
 
         val userId = prefs.getString("user_id", null)
-        if (userId != null) {
-            textNoAccount.visibility = TextView.GONE
-        } else {
-            textNoAccount.visibility = TextView.VISIBLE
+        val isLoggedIn = !userId.isNullOrBlank()
+        textNoAccount.visibility = if (isLoggedIn) TextView.GONE else TextView.VISIBLE
+        if (!isLoggedIn) {
+            textNoAccount.setOnClickListener {
+                startActivity(Intent(this, RegisterActivity::class.java))
+            }
         }
 
         buttonSendInstructions.setOnClickListener { handleSendInstructions() }
@@ -112,8 +112,8 @@ class ForgotPasswordActivity : AppCompatActivity() {
                         val intent = Intent(this, VerificationCodeActivity::class.java)
                         intent.putExtra("user_email", email)
                         // pass user_id if exists
-                        val userId = prefs.getString("user_id", null)
-                        if (userId != null) intent.putExtra("user_id", userId)
+                        val savedUserId = prefs.getString("user_id", null)
+                        if (!savedUserId.isNullOrBlank()) intent.putExtra("user_id", savedUserId)
                         startActivity(intent)
                         finish()
                     } else {

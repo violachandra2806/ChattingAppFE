@@ -33,6 +33,18 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // If the user session exists locally, go straight to the app.
+        val prefs = getSharedPreferences("UserData", MODE_PRIVATE)
+        val savedUserId = prefs.getString("user_id", null)
+        if (!savedUserId.isNullOrBlank()) {
+            val intent = Intent(this, DashboardActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+            startActivity(intent)
+            finish()
+            return
+        }
+
         setContentView(R.layout.activity_login)
 
         emailInput = findViewById(R.id.editTextEmailUsername)
