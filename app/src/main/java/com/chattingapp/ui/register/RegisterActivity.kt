@@ -24,8 +24,8 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var editTextEmail: EditText
     private lateinit var editTextUsername: EditText
     private lateinit var editTextDateOfBirth: EditText
-    private lateinit var editTextPassword: EditText
-    private lateinit var editTextConfirmPassword: EditText
+    private lateinit var passwordInput: EditText
+    private lateinit var confirmPasswordInput: EditText
     private lateinit var togglePasswordVisibility: ImageView
     private lateinit var toggleConfirmPasswordVisibility: ImageView
     private lateinit var buttonRegister: Button
@@ -42,8 +42,8 @@ class RegisterActivity : AppCompatActivity() {
         editTextEmail = findViewById(R.id.editTextEmail)
         editTextUsername = findViewById(R.id.editTextUsername)
         editTextDateOfBirth = findViewById(R.id.editTextDateOfBirth)
-        editTextPassword = findViewById(R.id.editTextPassword)
-        editTextConfirmPassword = findViewById(R.id.confirmTextPassword)
+        passwordInput = findViewById(R.id.editTextPassword)
+        confirmPasswordInput = findViewById(R.id.confirmTextPassword)
         togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility)
         toggleConfirmPasswordVisibility = findViewById(R.id.toggleConfirmPasswordVisibility)
         buttonRegister = findViewById(R.id.buttonRegister)
@@ -51,14 +51,6 @@ class RegisterActivity : AppCompatActivity() {
 
         // 🔹 Date picker
         editTextDateOfBirth.setOnClickListener { showDatePickerDialog() }
-
-        // 🔹 Password visibility toggle
-        setupPasswordToggle(editTextPassword, togglePasswordVisibility) { visible ->
-            isPasswordVisible = visible
-        }
-        setupPasswordToggle(editTextConfirmPassword, toggleConfirmPasswordVisibility) { visible ->
-            isConfirmPasswordVisible = visible
-        }
 
         buttonRegister.setOnClickListener { handleRegister() }
 
@@ -124,8 +116,8 @@ class RegisterActivity : AppCompatActivity() {
         val email = editTextEmail.text.toString().trim()
         val username = editTextUsername.text.toString().trim()
         val dateOfBirth = editTextDateOfBirth.text.toString().trim()
-        val password = editTextPassword.text.toString()
-        val confirmPassword = editTextConfirmPassword.text.toString()
+        val password = passwordInput.text.toString()
+        val confirmPassword = confirmPasswordInput.text.toString()
 
         if (email.isEmpty() || username.isEmpty() || dateOfBirth.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             Toast.makeText(this, getString(R.string.msg_all_fields_required), Toast.LENGTH_SHORT).show()

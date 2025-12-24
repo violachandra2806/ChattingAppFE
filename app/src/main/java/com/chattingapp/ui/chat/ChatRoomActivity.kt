@@ -777,6 +777,7 @@ class ChatRoomActivity : AppCompatActivity() {
         return chatItems
     }
 
+
     private fun initRealtimeSubscribe() {
         val supabase = SupabaseClient.getClient(this)
 
@@ -786,6 +787,7 @@ class ChatRoomActivity : AppCompatActivity() {
                 android.util.Log.d("ChatRealtime", "Room ID: $roomId")
                 android.util.Log.d("ChatRealtime", "Current User: $currentUserId")
 
+                // Subscribe to messages table
                 realtimeChannel = supabase.channel("messages-room-$roomId")
 
                 val changeFlow = realtimeChannel!!.postgresChangeFlow<PostgresAction>(schema = "public") {
@@ -794,29 +796,26 @@ class ChatRoomActivity : AppCompatActivity() {
                 }
 
                 changeFlow.onEach { action ->
-                    android.util.Log.d("ChatRealtime", "🔥 RECEIVED ACTION: ${action.javaClass.simpleName}")
+                    android.util.Log.d("ChatRealtime", "🔥 MESSAGES ACTION: ${action.javaClass.simpleName}")
 
                     when (action) {
                         is PostgresAction.Insert -> {
                             val newRecord = action.record as? Map<*, *>
                             android.util.Log.d("ChatRealtime", "📩 INSERT Record: $newRecord")
                             val msgId = newRecord?.get("message_id")?.toString()?.trim('"')
-                            android.util.Log.d("ChatRealtime", "Message ID: $msgId")
 
                             if (msgId != null) {
-                                android.util.Log.d("ChatRealtime", "🚀 Launching fetch for: $msgId")
+                                // Add delay to ensure all related tables are populated
+                                kotlinx.coroutines.delay(500)
                                 lifecycleScope.launch(Dispatchers.IO) {
-                                    android.util.Log.d("ChatRealtime", "🔥 Inside coroutine, calling fetch...")
                                     fetchAndAppendNewMessage(msgId)
                                 }
                             }
                         }
                         is PostgresAction.Update -> {
                             val updatedRecord = action.record as? Map<*, *>
-                            android.util.Log.d("ChatRealtime", "🔄 UPDATE Record: $updatedRecord")
                             val msgId = updatedRecord?.get("message_id")?.toString()?.trim('"')
                             if (msgId != null) {
-                                android.util.Log.d("ChatRealtime", "🚀 Launching update for: $msgId")
                                 launch(Dispatchers.IO) {
                                     updateMessageInList(msgId)
                                 }
@@ -824,20 +823,20 @@ class ChatRoomActivity : AppCompatActivity() {
                         }
                         is PostgresAction.Delete -> {
                             val oldRecord = action.oldRecord as? Map<*, *>
-                            android.util.Log.d("ChatRealtime", "🗑️ DELETE Record: $oldRecord")
                             val msgId = oldRecord?.get("message_id")?.toString()?.trim('"')
                             if (msgId != null) {
                                 removeMessageFromList(msgId)
                             }
                         }
-                        else -> {
-                            android.util.Log.d("ChatRealtime", "❓ Unknown action: $action")
-                        }
+                        else -> {}
                     }
                 }.launchIn(lifecycleScope)
 
                 realtimeChannel!!.subscribe()
-                android.util.Log.d("ChatRealtime", "✅ Successfully subscribed to channel")
+                android.util.Log.d("ChatRealtime", "✅ Messages channel subscribed")
+
+                // === NEW: Subscribe to voice_notes table for transcript updates ===
+                subscribeToVoiceNotesUpdates(supabase)
 
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -986,7 +985,6 @@ class ChatRoomActivity : AppCompatActivity() {
 
         try {
             playerHelper.release()
-            android.util.Log.d("ChatRoom", "AudioPlayer released")
         } catch (e: Exception) {
             android.util.Log.e("ChatRoom", "Error releasing AudioPlayer: ${e.message}", e)
         }
@@ -994,7 +992,8 @@ class ChatRoomActivity : AppCompatActivity() {
         try {
             lifecycleScope.launch {
                 realtimeChannel?.unsubscribe()
-                android.util.Log.d("ChatRealtime", "Channel unsubscribed")
+                voiceNotesChannel?.unsubscribe()  // Unsubscribe voice notes channel too
+                android.util.Log.d("ChatRealtime", "Channels unsubscribed")
             }
         } catch (e: Exception) {
             android.util.Log.e("ChatRealtime", "Error unsubscribing: ${e.message}", e)

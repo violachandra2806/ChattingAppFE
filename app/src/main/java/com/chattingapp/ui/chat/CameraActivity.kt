@@ -48,7 +48,12 @@ class CameraActivity : AppCompatActivity() {
     private var recordedVideoUri: Uri? = null
     private var isFrontCamera = true
 
-    private val client = OkHttpClient()
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+        .writeTimeout(120, java.util.concurrent.TimeUnit.SECONDS)  // Upload timeout
+        .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)    // Response timeout
+        .build()
+
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private var videoResolution: String = ""
