@@ -86,7 +86,8 @@ class ChatRoomActivity : AppCompatActivity() {
 
     fun getPlayerHelper(): AudioPlayerHelper = playerHelper
 
-    private var realtimeChannel: io.github.jan.supabase.realtime.RealtimeChannel? = null
+    private var realtimeChannel: RealtimeChannel? = null
+    private var voiceNotesChannel: RealtimeChannel? = null
 
     private val videoDownloadJobs = mutableMapOf<String, Job>()
 
@@ -850,6 +851,40 @@ class ChatRoomActivity : AppCompatActivity() {
                     ).show()
                 }
             }
+        }
+    }
+
+    private suspend fun subscribeToVoiceNotesUpdates(supabase: io.github.jan.supabase.SupabaseClient) {
+        try {
+            voiceNotesChannel = supabase.channel("voice-notes-room-$roomId")
+
+            val changeFlow = voiceNotesChannel!!.postgresChangeFlow<PostgresAction>(schema = "public") {
+                table = "voice_notes"
+                // Intentionally no filter here: schema may not have room_id in voice_notes.
+                // We only react when message_id is present.
+            }
+
+            changeFlow.onEach { action ->
+                val record = when (action) {
+                    is PostgresAction.Insert -> action.record as? Map<*, *>
+                    is PostgresAction.Update -> action.record as? Map<*, *>
+                    is PostgresAction.Delete -> action.oldRecord as? Map<*, *>
+                    else -> null
+                }
+
+                val msgId = record?.get("message_id")?.toString()?.trim('"')
+                if (!msgId.isNullOrBlank()) {
+                    android.util.Log.d("ChatRealtime", "🎙️ voice_notes change for message_id=$msgId")
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        updateMessageInList(msgId)
+                    }
+                }
+            }.launchIn(lifecycleScope)
+
+            voiceNotesChannel!!.subscribe()
+            android.util.Log.d("ChatRealtime", "✅ Voice notes channel subscribed")
+        } catch (e: Exception) {
+            android.util.Log.e("ChatRealtime", "❌ Voice notes subscription error: ${e.message}", e)
         }
     }
 

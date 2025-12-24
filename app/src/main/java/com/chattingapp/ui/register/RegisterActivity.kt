@@ -130,12 +130,12 @@ class RegisterActivity : AppCompatActivity() {
         }
 
         if (password.length < 8) {
-            editTextPassword.error = getString(R.string.msg_password_min_8)
+            passwordInput.error = getString(R.string.msg_password_min_8)
             return
         }
 
         if (password != confirmPassword) {
-            editTextConfirmPassword.error = getString(R.string.msg_password_confirmation_mismatch)
+            confirmPasswordInput.error = getString(R.string.msg_password_confirmation_mismatch)
             return
         }
 
