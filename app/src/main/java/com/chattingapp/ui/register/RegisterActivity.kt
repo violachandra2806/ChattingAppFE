@@ -50,6 +50,10 @@ class RegisterActivity : AppCompatActivity() {
         alreadyHaveAccount = findViewById(R.id.alreadyHaveAccount)
 
         // 🔹 Date picker
+        editTextDateOfBirth.keyListener = null
+        editTextDateOfBirth.isFocusable = false
+        editTextDateOfBirth.isFocusableInTouchMode = false
+        editTextDateOfBirth.isCursorVisible = false
         editTextDateOfBirth.setOnClickListener { showDatePickerDialog() }
 
         buttonRegister.setOnClickListener { handleRegister() }
@@ -140,15 +144,42 @@ class RegisterActivity : AppCompatActivity() {
         }
 
         // 🔹 Kirim ke backend Flask
-        registerUserToBackend(email, username, password)
+        registerUserToBackend(email, username, dateOfBirth, password)
     }
 
-    private fun registerUserToBackend(email: String, username: String, password: String) {
+    private fun registerUserToBackend(email: String, username: String, dateOfBirth: String, password: String) {
         val url = "${BuildConfig.BASE_URL}registeruser"
+
+        fun formatDobForBackend(dobString: String?): String {
+            val raw = dobString?.trim().orEmpty()
+            if (raw.isBlank()) return ""
+            if (raw.equals("null", true)) return ""
+            if (Regex("\\d{4}-\\d{2}-\\d{2}").matches(raw)) return raw
+
+            val utc = TimeZone.getTimeZone("UTC")
+            val possibleFormats = listOf(
+                SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()),
+                SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            ).onEach { it.timeZone = utc }
+
+            for (format in possibleFormats) {
+                try {
+                    val date = format.parse(raw)
+                    if (date != null) {
+                        return SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
+                            timeZone = utc
+                        }.format(date)
+                    }
+                } catch (_: Exception) {
+                }
+            }
+            return raw
+        }
 
         val requestBody = JSONObject().apply {
             put("user_email", email)
             put("username", username)
+            put("dob", formatDobForBackend(dateOfBirth))
             put("password", password)
             put("profile_picture", "")
         }

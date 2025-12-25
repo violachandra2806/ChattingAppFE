@@ -1,7 +1,7 @@
 <resources>
 
     <!-- App -->
-    <string name="app_name">Aplikasi Chat</string>
+    <string name="app_name">KALVI</string>
     <string name="app_title_welcome">Selamat Datang</string>
     <string name="title_chat">Obrolan</string>
     <string name="title_friend">Teman</string>
@@ -15,7 +15,10 @@
     <string name="label_chat_header">Obrolan</string>
     <string name="label_friend_requests">Permintaan teman</string>
     <string name="label_friends_list">Daftar Teman</string>
-    <string name="label_no_chat_rooms">Tidak ada ruang chat tersedia</string>
+    <string name="label_no_chat_rooms">Belum ada chat saat ini</string>
+    <string name="label_message_first">Mulai percakapan di sini</string>
+    <string name="label_no_friend_requests">Tidak ada permintaan teman saat ini</string>
+    <string name="label_bio_not_set">Bio belum diatur</string>
 
     <!-- Hints -->
     <string name="hint_search">Cari</string>

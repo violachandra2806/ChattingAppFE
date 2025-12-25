@@ -42,16 +42,6 @@
             android:background="@drawable/bg_circle_light_purple"
             android:layout_marginBottom="24dp" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Profil Saya"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/black"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="24dp" />
-
         <!-- Username -->
         <EditText
             android:id="@+id/etUsername"

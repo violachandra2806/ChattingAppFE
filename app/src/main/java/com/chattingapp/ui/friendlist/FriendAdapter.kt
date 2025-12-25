@@ -11,6 +11,7 @@ import com.chattingapp.utils.AvatarUtils
 
 class FriendAdapter(
     private var displayedList: List<Friend>,
+    private val onItemClick: (Friend) -> Unit,
     private val onChatClick: (Friend) -> Unit
 ) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>() {
 
@@ -32,6 +33,10 @@ class FriendAdapter(
 
         // Load profile picture; fallback to initial with random (stable) background
         AvatarUtils.loadInto(holder.profileImage, friend.profilePicture, friend.username)
+
+        holder.itemView.setOnClickListener {
+            onItemClick(friend)
+        }
 
         holder.chatIcon.setOnClickListener {
             onChatClick(friend)

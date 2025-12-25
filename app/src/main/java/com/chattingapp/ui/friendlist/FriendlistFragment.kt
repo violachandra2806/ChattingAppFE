@@ -23,6 +23,7 @@ import com.chattingapp.R
 import com.chattingapp.ui.friendlist.addfriend.AddFriendActivity
 import com.chattingapp.ui.friendlist.friendrequest.FriendRequestActivity
 import com.chattingapp.ui.chat.ChatRoomActivity
+import com.chattingapp.ui.chat.BioActivity
 import com.android.volley.Request
 import com.android.volley.RequestQueue
 import com.android.volley.Response
@@ -118,11 +119,20 @@ class FriendListFragment : Fragment() {
             return
         }
 
-        adapter = FriendAdapter(emptyList()) { friend ->
-            createOrGetChatRoom(friend)
-        }
+        adapter = FriendAdapter(
+            emptyList(),
+            onItemClick = { friend -> openFriendBio(friend) },
+            onChatClick = { friend -> createOrGetChatRoom(friend) }
+        )
         currentRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         currentRecyclerView.adapter = adapter
+    }
+
+    private fun openFriendBio(friend: Friend) {
+        val intent = Intent(requireContext(), BioActivity::class.java).apply {
+            putExtra("user_id", friend.userId)
+        }
+        startActivity(intent)
     }
 
     private fun setupClickListeners() {

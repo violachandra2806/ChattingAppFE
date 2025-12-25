@@ -3,6 +3,11 @@ package com.chattingapp.ui.forgotpassword
 import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.text.Editable
+import android.text.InputFilter
+import android.text.TextWatcher
+import android.view.KeyEvent
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -46,6 +51,8 @@ class VerificationCodeActivity : AppCompatActivity() {
         userEmail = intent.getStringExtra("user_email")
         userId = intent.getStringExtra("user_id")
 
+        setupOtpInputs()
+
         buttonSubmit.setOnClickListener { handleSubmit() }
 
         // disable resend for 20 seconds initially and start countdown
@@ -55,6 +62,97 @@ class VerificationCodeActivity : AppCompatActivity() {
             // resend the verification email
             resendEmail()
         }
+    }
+
+    private fun setupOtpInputs() {
+        val fields = listOf(code1, code2, code3, code4)
+
+        // Override XML maxLength=1 so paste (e.g., "1234") can be captured and distributed.
+        // We'll still enforce one digit per box via TextWatcher.
+        fields.forEach { it.filters = arrayOf<InputFilter>(InputFilter.LengthFilter(fields.size)) }
+
+        var isProgrammaticChange = false
+
+        fun distributeFrom(startIndex: Int, raw: String) {
+            val digits = raw.filter { it.isDigit() }
+            if (digits.isEmpty()) return
+
+            isProgrammaticChange = true
+            try {
+                var idx = startIndex
+                for (ch in digits) {
+                    if (idx >= fields.size) break
+                    fields[idx].setText(ch.toString())
+                    fields[idx].setSelection(fields[idx].text?.length ?: 0)
+                    idx++
+                }
+
+                // Focus next empty field (or last)
+                val nextEmpty = fields.indexOfFirst { it.text?.toString().orEmpty().isBlank() }
+                val focusIndex = if (nextEmpty == -1) fields.size - 1 else nextEmpty
+                fields[focusIndex].requestFocus()
+            } finally {
+                isProgrammaticChange = false
+            }
+        }
+
+        fields.forEachIndexed { index, editText ->
+            editText.addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    if (isProgrammaticChange) return
+                    val text = s?.toString().orEmpty()
+
+                    when {
+                        text.length > 1 -> {
+                            // Paste case (or IME inserted multiple chars)
+                            distributeFrom(index, text)
+                        }
+                        text.length == 1 -> {
+                            // Normal typing: move to next box
+                            if (index < fields.size - 1) fields[index + 1].requestFocus()
+                        }
+                    }
+                }
+
+                override fun afterTextChanged(s: Editable?) {
+                    if (isProgrammaticChange) return
+                    // Keep only 1 digit in each box
+                    val t = s?.toString().orEmpty()
+                    if (t.length <= 1) return
+                    val firstDigit = t.firstOrNull { it.isDigit() }?.toString().orEmpty()
+                    isProgrammaticChange = true
+                    try {
+                        editText.setText(firstDigit)
+                        editText.setSelection(editText.text?.length ?: 0)
+                    } finally {
+                        isProgrammaticChange = false
+                    }
+                }
+            })
+
+            // Backspace: if empty, go to previous and clear it
+            editText.setOnKeyListener { v: View, keyCode: Int, event: KeyEvent ->
+                if (keyCode == KeyEvent.KEYCODE_DEL && event.action == KeyEvent.ACTION_DOWN) {
+                    val current = (v as EditText).text?.toString().orEmpty()
+                    if (current.isEmpty() && index > 0) {
+                        val prev = fields[index - 1]
+                        prev.requestFocus()
+                        prev.setText("")
+                        return@setOnKeyListener true
+                    }
+                }
+                false
+            }
+
+            // Convenient: tap focuses and selects existing digit
+            editText.setOnFocusChangeListener { _, hasFocus ->
+                if (hasFocus) editText.selectAll()
+            }
+        }
+
+        code1.requestFocus()
     }
 
     private fun handleSubmit() {

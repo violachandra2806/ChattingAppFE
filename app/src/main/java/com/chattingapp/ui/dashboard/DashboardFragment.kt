@@ -186,26 +186,28 @@ class DashboardFragment : Fragment() {
                 try {
                     if (response.getString("status") == "success" && response.getInt("code") == 0) {
                         val dataObject = response.getJSONObject("data")
-                        val chatRoomsArray = dataObject.getJSONArray("chat_rooms")
+                        val chatRoomsArray = dataObject.optJSONArray("chat_rooms")
                         val newChatRooms = mutableListOf<ChatRoom>()
 
-                        for (i in 0 until chatRoomsArray.length()) {
-                            val item = chatRoomsArray.getJSONObject(i)
-                            val friendObject = item.getJSONObject("friend")
+                        if (chatRoomsArray != null) {
+                            for (i in 0 until chatRoomsArray.length()) {
+                                val item = chatRoomsArray.getJSONObject(i)
+                                val friendObject = item.getJSONObject("friend")
 
-                            newChatRooms.add(
-                                ChatRoom(
-                                    id = item.getString("room_id"),
-                                    username = friendObject.getString("username"),
-                                    profilePicture = friendObject.optString("profile_picture", ""),
-                                    lastMessage = item.optString("last_message", ""),
-                                    time = formatTime(item.optString("last_message_at", "")),
-                                    unreadCount = 0,
-                                    userIdFirst = currentUserId,
-                                    userIdSecond = friendObject.getString("user_id"),
-                                    lastMessageAt = item.optString("last_message_at", "")
+                                newChatRooms.add(
+                                    ChatRoom(
+                                        id = item.getString("room_id"),
+                                        username = friendObject.getString("username"),
+                                        profilePicture = friendObject.optString("profile_picture", ""),
+                                        lastMessage = item.optString("last_message", ""),
+                                        time = formatTime(item.optString("last_message_at", "")),
+                                        unreadCount = 0,
+                                        userIdFirst = currentUserId,
+                                        userIdSecond = friendObject.getString("user_id"),
+                                        lastMessageAt = item.optString("last_message_at", "")
+                                    )
                                 )
-                            )
+                            }
                         }
 
                         if (currentPage == 1) {
@@ -221,7 +223,12 @@ class DashboardFragment : Fragment() {
 
                         updateEmptyState()
                     } else {
-                        handleError("Failed to load chat rooms: ${response.optString("message", "Unknown error")}")
+                        val msg = response.optString("message", "").trim()
+                        if (msg.isBlank() || msg.equals("null", true)) {
+                            showNoChatsState()
+                        } else {
+                            handleError("Failed to load chat rooms: $msg")
+                        }
                     }
                 } catch (e: Exception) {
                     handleError("Failed to parse response: ${e.message}")
@@ -234,11 +241,26 @@ class DashboardFragment : Fragment() {
                     binding.progressBar.isVisible = false
                     binding.progressBarBottom.isVisible = false
                 }
-                handleError("Failed to load chat rooms: ${error.message}")
+                val msg = error.message?.trim().orEmpty()
+                if (msg.isBlank() || msg.equals("null", true)) {
+                    showNoChatsState()
+                } else {
+                    handleError("Failed to load chat rooms: $msg")
+                }
             })
 
         request.tag = volleyTag
         requestQueue?.add(request)
+    }
+
+    private fun showNoChatsState() {
+        if (_binding == null) return
+        if (currentPage == 1) {
+            chatRooms.clear()
+            hasMore = false
+            adapter.notifyDataSetChanged()
+        }
+        updateEmptyState()
     }
 
     // ✅ REALTIME SUBSCRIPTION FOR CHAT_ROOM TABLE
@@ -402,6 +424,7 @@ class DashboardFragment : Fragment() {
     }
 
     private fun formatTime(dateString: String): String {
+        if (dateString.isBlank() || dateString.equals("null", ignoreCase = true)) return ""
         return try {
             val inputFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US)
             inputFormat.timeZone = java.util.TimeZone.getTimeZone("GMT")
@@ -413,14 +436,14 @@ class DashboardFragment : Fragment() {
             if (date != null) {
                 outputFormat.format(date)
             } else {
-                "00:00"
+                ""
             }
         } catch (e: Exception) {
             Log.e("DashboardFragment", "Error parsing time: ${e.message}")
             try {
-                dateString.split(" ").getOrNull(4)?.substring(0, 5) ?: "00:00"
+                dateString.split(" ").getOrNull(4)?.substring(0, 5).orEmpty()
             } catch (e2: Exception) {
-                "00:00"
+                ""
             }
         }
     }

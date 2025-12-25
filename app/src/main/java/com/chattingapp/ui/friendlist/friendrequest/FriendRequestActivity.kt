@@ -5,7 +5,9 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -23,6 +25,7 @@ import android.widget.Button
 class FriendRequestActivity : AppCompatActivity() {
 
     private lateinit var recyclerView: RecyclerView
+    private lateinit var emptyState: TextView
     private lateinit var adapter: FriendRequestAdapter
     private lateinit var queue: RequestQueue
 
@@ -33,6 +36,7 @@ class FriendRequestActivity : AppCompatActivity() {
         val btnBack = findViewById<ImageView>(R.id.btnBack)
         val btnAddFriend = findViewById<Button>(R.id.buttonAddFriend)
         recyclerView = findViewById(R.id.recyclerView)
+        emptyState = findViewById(R.id.tvEmptyState)
         recyclerView.layoutManager = LinearLayoutManager(this)
         queue = Volley.newRequestQueue(this)
 
@@ -51,6 +55,11 @@ class FriendRequestActivity : AppCompatActivity() {
         }
 
         getFriendRequests(userId)
+    }
+
+    private fun setEmptyState(isEmpty: Boolean) {
+        emptyState.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        recyclerView.visibility = if (isEmpty) View.GONE else View.VISIBLE
     }
 
     private fun getFriendRequests(userId: String) {
@@ -85,22 +94,30 @@ class FriendRequestActivity : AppCompatActivity() {
 
                         }
 
-                        adapter = FriendRequestAdapter(
-                            requests,
-                            onAccept = { req -> acceptFriendRequest(req.requestId, req.senderId, userId) },
-                            onReject = { req -> rejectFriendRequest(req.requestId) }
-                        )
-                        recyclerView.adapter = adapter
+                        if (requests.isEmpty()) {
+                            setEmptyState(true)
+                        } else {
+                            setEmptyState(false)
+                            adapter = FriendRequestAdapter(
+                                requests,
+                                onAccept = { req -> acceptFriendRequest(req.requestId, req.senderId, userId) },
+                                onReject = { req -> rejectFriendRequest(req.requestId) }
+                            )
+                            recyclerView.adapter = adapter
+                        }
 
                     } else {
+                        setEmptyState(true)
                         Toast.makeText(this, getString(R.string.msg_failed_fetch_data), Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     Log.e("FriendReq", "Parsing error: ${e.message}")
+                    setEmptyState(true)
                 }
             },
             { error ->
                 Log.e("FriendReq", "Volley error: ${error.message}")
+                setEmptyState(true)
                 Toast.makeText(this, getString(R.string.msg_network_error_en), Toast.LENGTH_SHORT).show()
             }
         )

@@ -30,8 +30,27 @@ class ChatRoomAdapter(
     override fun onBindViewHolder(holder: ChatRoomViewHolder, position: Int) {
         val chatRoom = chatRooms[position]
         holder.tvUsername.text = chatRoom.username
-        holder.tvLastMessage.text = chatRoom.lastMessage
-        holder.tvTime.text = chatRoom.time
+
+        val lastMessageText = chatRoom.lastMessage.trim()
+        val hasLastMessage = lastMessageText.isNotBlank() && !lastMessageText.equals("null", true)
+        val hasLastMessageAt = chatRoom.lastMessageAt.isNotBlank() && !chatRoom.lastMessageAt.equals("null", true)
+        val shouldShowPlaceholder = !hasLastMessage
+
+        if (shouldShowPlaceholder) {
+            holder.tvLastMessage.text = holder.itemView.context.getString(R.string.label_message_first)
+            holder.tvTime.visibility = View.GONE
+        } else {
+            holder.tvLastMessage.text = lastMessageText
+
+            val timeText = chatRoom.time
+            if (timeText.isBlank()) {
+                holder.tvTime.visibility = View.GONE
+            } else {
+                holder.tvTime.visibility = View.VISIBLE
+                holder.tvTime.text = timeText
+            }
+        }
+
         holder.tvUnreadCount.text = chatRoom.unreadCount.toString()
         holder.tvUnreadCount.visibility = if (chatRoom.unreadCount > 0) View.VISIBLE else View.GONE
 

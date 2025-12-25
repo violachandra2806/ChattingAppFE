@@ -1,5 +1,6 @@
 package com.chattingapp.ui.editprofile
 
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.BitmapFactory
@@ -22,8 +23,83 @@ import org.json.JSONObject
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import java.util.TimeZone
 
 class EditProfileActivity : AppCompatActivity() {
+
+    private fun formatDobDateOnly(dobString: String?): String {
+        val raw = dobString?.trim().orEmpty()
+        if (raw.isBlank()) return ""
+        if (raw.equals("null", true)) return ""
+
+        // Already in desired format
+        if (Regex("\\d{2}/\\d{2}/\\d{4}").matches(raw)) return raw
+
+        val utc = TimeZone.getTimeZone("UTC")
+        val possibleFormats = listOf(
+            SimpleDateFormat("yyyy-MM-dd", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US),
+            SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US),
+            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        ).onEach { it.timeZone = utc }
+
+        for (format in possibleFormats) {
+            try {
+                val date = format.parse(raw)
+                if (date != null) {
+                    return SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
+                        timeZone = utc
+                    }.format(date)
+                }
+            } catch (_: Exception) {
+            }
+        }
+
+        return ""
+    }
+
+    private fun formatDobForBackend(dobString: String?): String {
+        val raw = dobString?.trim().orEmpty()
+        if (raw.isBlank()) return ""
+        if (raw.equals("null", true)) return ""
+
+        // Already in a common backend-friendly format
+        if (Regex("\\d{4}-\\d{2}-\\d{2}").matches(raw)) return raw
+
+        val utc = TimeZone.getTimeZone("UTC")
+        val possibleFormats = listOf(
+            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()),
+            SimpleDateFormat("yyyy-MM-dd", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US),
+            SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US)
+        ).onEach { it.timeZone = utc }
+
+        for (format in possibleFormats) {
+            try {
+                val date = format.parse(raw)
+                if (date != null) {
+                    return SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
+                        timeZone = utc
+                    }.format(date)
+                }
+            } catch (_: Exception) {
+            }
+        }
+
+        // Fallback: send raw so existing behavior isn't worse if backend accepts it
+        return raw
+    }
 
     private lateinit var backIcon: ImageView
     private lateinit var profileImage: ImageView
@@ -59,6 +135,13 @@ class EditProfileActivity : AppCompatActivity() {
         editPassword.isEnabled = false
         editPassword.setText(getString(R.string.placeholder_password_mask))
 
+        // DOB should be picked from a calendar (no manual typing)
+        editDob.keyListener = null
+        editDob.isFocusable = false
+        editDob.isFocusableInTouchMode = false
+        editDob.isCursorVisible = false
+        editDob.setOnClickListener { showDobPicker() }
+
         backIcon.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
         buttonSave.isEnabled = false
@@ -75,6 +158,41 @@ class EditProfileActivity : AppCompatActivity() {
             val i = Intent(this, ForgotPasswordActivity::class.java)
             startActivity(i)
         }
+    }
+
+    private fun showDobPicker() {
+        val utc = TimeZone.getTimeZone("UTC")
+
+        val cal = Calendar.getInstance(utc)
+        val currentText = editDob.text?.toString().orEmpty().trim()
+        if (currentText.isNotBlank() && !currentText.equals("null", true)) {
+            try {
+                val parsed = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
+                    timeZone = utc
+                }.parse(currentText)
+                if (parsed != null) cal.time = parsed
+            } catch (_: Exception) {
+            }
+        }
+
+        val datePickerDialog = DatePickerDialog(
+            this,
+            { _, year, month, dayOfMonth ->
+                val selected = Calendar.getInstance(utc)
+                selected.set(year, month, dayOfMonth)
+                val formatted = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
+                    timeZone = utc
+                }.format(selected.time)
+                editDob.setText(formatted)
+                toggleSaveIfChanged()
+            },
+            cal.get(Calendar.YEAR),
+            cal.get(Calendar.MONTH),
+            cal.get(Calendar.DAY_OF_MONTH)
+        )
+
+        datePickerDialog.datePicker.maxDate = System.currentTimeMillis()
+        datePickerDialog.show()
     }
 
     private fun addChangeListeners() {
@@ -145,6 +263,8 @@ class EditProfileActivity : AppCompatActivity() {
                     if (looksLikeDateLikeString(rawBio)) rawBio else rawDob
                 }
 
+                val dobDisplay = formatDobDateOnly(dob)
+
                 val profilePictureCandidate = userObj.optString("profile_picture", "").trim()
                 val blockedUserCandidate = userObj.optString("blocked_user", "").trim()
                 val profilePicture = when {
@@ -156,11 +276,11 @@ class EditProfileActivity : AppCompatActivity() {
                 runOnUiThread {
                     originalUsername = username
                     originalEmail = userEmail
-                    originalDob = dob
+                    originalDob = dobDisplay
 
                     editUsername.setText(username)
                     editEmail.setText(userEmail)
-                    editDob.setText(dob)
+                    editDob.setText(dobDisplay)
 
                     // Load profile picture; fallback to initial with random (stable) background
                     AvatarUtils.loadInto(profileImage, profilePicture, username)
@@ -180,17 +300,25 @@ class EditProfileActivity : AppCompatActivity() {
             return
         }
 
+        val dobRawUi = editDob.text.toString().trim()
+        val dobBackend = formatDobForBackend(dobRawUi).trim()
+
         val payload = JSONObject()
         payload.put("user_id", userId)
         payload.put("username", editUsername.text.toString().trim())
         payload.put("user_email", editEmail.text.toString().trim())
-        payload.put("dob", editDob.text.toString().trim())
+        payload.put("dob", dobBackend)
+
+        Log.d("EditProfile", "Saving profile: dob_ui='$dobRawUi' dob_backend='$dobBackend'")
+        Log.d("EditProfile", "Payload: ${payload}")
 
         buttonSave.isEnabled = false
 
         Thread {
             try {
-                val url = URL("${BuildConfig.BASE_URL}updateuser")
+                val urlString = "${BuildConfig.BASE_URL}editprofile"
+                Log.d("EditProfile", "POST $urlString")
+                val url = URL(urlString)
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
@@ -203,6 +331,9 @@ class EditProfileActivity : AppCompatActivity() {
                 val respCode = conn.responseCode
                 val stream = if (respCode in 200..299) conn.inputStream else conn.errorStream
                 val resp = stream.bufferedReader().use { it.readText() }
+
+                Log.d("EditProfile", "Response code=$respCode")
+                Log.d("EditProfile", "Response body=$resp")
 
                 runOnUiThread {
                     if (respCode in 200..299) {
@@ -220,6 +351,7 @@ class EditProfileActivity : AppCompatActivity() {
 
             } catch (e: Exception) {
                 e.printStackTrace()
+                Log.e("EditProfile", "Save failed", e)
                 runOnUiThread {
                     Toast.makeText(this, getString(R.string.msg_network_error), Toast.LENGTH_SHORT).show()
                     buttonSave.isEnabled = true

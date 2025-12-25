@@ -23,8 +23,46 @@ import com.chattingapp.ui.bio.EditBioActivity
 import com.chattingapp.ui.editprofile.EditProfileActivity
 import com.chattingapp.ui.login.LoginActivity
 import com.chattingapp.utils.AvatarUtils
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class SettingsFragment : Fragment() {
+
+    private fun formatDobDateOnly(dobString: String?): String {
+        val raw = dobString?.trim().orEmpty()
+        if (raw.isBlank()) return "-"
+        if (raw.equals("null", true)) return "-"
+
+        // Already in desired format
+        if (Regex("\\d{2}/\\d{2}/\\d{4}").matches(raw)) return raw
+
+        val utc = TimeZone.getTimeZone("UTC")
+        val possibleFormats = listOf(
+            SimpleDateFormat("yyyy-MM-dd", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US),
+            SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US),
+            SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US),
+            SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        ).onEach { it.timeZone = utc }
+
+        for (format in possibleFormats) {
+            try {
+                val date = format.parse(raw)
+                if (date != null) {
+                    return SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply {
+                        timeZone = utc
+                    }.format(date)
+                }
+            } catch (_: Exception) {
+            }
+        }
+
+        return "-"
+    }
 
     private var tvTitle: TextView? = null
     private var tvProfilePicture: TextView? = null
@@ -159,7 +197,7 @@ class SettingsFragment : Fragment() {
                         if (!isAdded) return@JsonObjectRequest
                         etUsername?.setText(username)
                         etEmail?.setText(email)
-                        etDob?.setText(dob.ifBlank { "-" })
+                        etDob?.setText(formatDobDateOnly(dob))
 
                         // Set Initials for Profile Picture (TextView based on XML)
                         tvProfilePicture?.let { AvatarUtils.applyTo(it, username) }

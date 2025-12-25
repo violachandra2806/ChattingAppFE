@@ -115,7 +115,7 @@ class BioActivity : AppCompatActivity() {
                                 etBio.setText(bio)
                             } else {
                                 etBio.setText("")
-                                etBio.hint = "-"
+                                etBio.hint = getString(R.string.label_bio_not_set)
                             }
 
                             // Set Tgl Lahir
