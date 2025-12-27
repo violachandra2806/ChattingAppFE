@@ -214,6 +214,9 @@ class ChatRoomActivity : AppCompatActivity() {
     private fun openVideoPlayer(message: Message, videoUriString: String) {
         val intent = Intent(this, VideoPlayerActivity::class.java).apply {
             putExtra(VideoPlayerActivity.EXTRA_VIDEO_URL, videoUriString)
+            // Always pass the original remote URL (Supabase/public URL) separately.
+            // Playback may use a local cached file, but translation must use a URL the backend can download.
+            putExtra(VideoPlayerActivity.EXTRA_REMOTE_VIDEO_URL, message.mediaUrl ?: "")
             putExtra(VideoPlayerActivity.EXTRA_MESSAGE_ID, message.messageId)
             putExtra(VideoPlayerActivity.EXTRA_ROOM_ID, message.roomId)
             putExtra(VideoPlayerActivity.EXTRA_TRANSLATE_YN, message.translateYN ?: "N")

@@ -309,6 +309,8 @@ class MediaPreviewActivity : AppCompatActivity() {
                         )
                     }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                Log.i("TRANSLATE_UPLOAD", "Upload cancelled")
             } catch (e: Exception) {
                 Log.e("TRANSLATE_UPLOAD", "Upload error: ${e.message}", e)
                 withContext(Dispatchers.Main) {
@@ -390,6 +392,8 @@ class MediaPreviewActivity : AppCompatActivity() {
                     Log.e("UPLOAD_VIDEO_NOTE", "❌ Empty response body")
                 }
                 null
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.e("UPLOAD_VIDEO_NOTE", "❌ Exception: ${e.message}", e)
                 null
@@ -506,6 +510,8 @@ class MediaPreviewActivity : AppCompatActivity() {
                         )
                     }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                Log.i("TRANSLATE_ASL", "Translate cancelled")
             } catch (e: Exception) {
                 Log.e("TRANSLATE_ASL", "❌ Network error: ${e.message}", e)
                 withContext(Dispatchers.Main) {
@@ -732,6 +738,9 @@ class MediaPreviewActivity : AppCompatActivity() {
                         )
                     }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // User navigated away / Activity destroyed — not a real network error.
+                Log.i("SEND_VIDEO_NOTE", "Send cancelled")
             } catch (e: Exception) {
                 Log.e("SEND_VIDEO_NOTE", "❌ Network error: ${e.message}", e)
                 withContext(Dispatchers.Main) {

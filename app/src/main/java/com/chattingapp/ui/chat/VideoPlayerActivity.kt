@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import com.chattingapp.BuildConfig
 import com.chattingapp.R
 import com.chattingapp.databinding.ActivityVideoPlayerBinding
@@ -50,8 +51,11 @@ class VideoPlayerActivity : AppCompatActivity() {
         .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
         .build()
 
+    private var remoteVideoUrl: String = ""
+
     companion object {
         const val EXTRA_VIDEO_URL = "video_url"
+        const val EXTRA_REMOTE_VIDEO_URL = "remote_video_url"
         const val EXTRA_MESSAGE_ID = "message_id"
         const val EXTRA_ROOM_ID = "room_id"
         const val EXTRA_TRANSLATE_YN = "translate_yn"
@@ -69,6 +73,7 @@ class VideoPlayerActivity : AppCompatActivity() {
 
         // Get extras
         videoUrl = intent.getStringExtra(EXTRA_VIDEO_URL) ?: ""
+        remoteVideoUrl = intent.getStringExtra(EXTRA_REMOTE_VIDEO_URL) ?: ""
         messageId = intent.getStringExtra(EXTRA_MESSAGE_ID) ?: ""
         roomId = intent.getStringExtra(EXTRA_ROOM_ID) ?: ""
         translateYN = intent.getStringExtra(EXTRA_TRANSLATE_YN) ?: "N"
@@ -78,6 +83,7 @@ class VideoPlayerActivity : AppCompatActivity() {
 
         Log.d("VideoPlayer", "Intent extras received:")
         Log.d("VideoPlayer", "  - videoUrl: $videoUrl")
+        Log.d("VideoPlayer", "  - remoteVideoUrl: $remoteVideoUrl")
         Log.d("VideoPlayer", "  - messageId: $messageId")
         Log.d("VideoPlayer", "  - roomId: $roomId")
         Log.d("VideoPlayer", "  - translateYN: $translateYN")
@@ -108,6 +114,20 @@ class VideoPlayerActivity : AppCompatActivity() {
 
         // Check translation status and load subtitles if available
         checkTranslationStatusAndLoadSubtitles()
+    }
+
+    private fun pickVideoUrlForTranslation(): String {
+        // Translation service/backend must be able to download the video.
+        // Use the remote URL (Supabase/public) if available; otherwise fall back to videoUrl only if it's http(s).
+        val remote = remoteVideoUrl.trim()
+        if (remote.startsWith("http://", ignoreCase = true) || remote.startsWith("https://", ignoreCase = true)) {
+            return remote
+        }
+        val play = videoUrl.trim()
+        if (play.startsWith("http://", ignoreCase = true) || play.startsWith("https://", ignoreCase = true)) {
+            return play
+        }
+        return ""
     }
 
     private fun hideSystemBars() {
@@ -556,18 +576,29 @@ class VideoPlayerActivity : AppCompatActivity() {
         binding.progressBar.visibility = View.VISIBLE
         binding.btnTranslateASL.isEnabled = false // Disable button while processing
 
-        CoroutineScope(Dispatchers.IO).launch {
+        val translationUrl = pickVideoUrlForTranslation()
+        if (translationUrl.isBlank()) {
+            binding.progressBar.visibility = View.GONE
+            binding.btnTranslateASL.isEnabled = true
+            Toast.makeText(this, getString(R.string.msg_video_url_not_available), Toast.LENGTH_SHORT).show()
+            Log.w("VideoPlayer", "Translation blocked: no remote http(s) URL available. videoUrl=$videoUrl remoteVideoUrl=$remoteVideoUrl")
+            return
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
             try {
                 // Log what we're sending
                 Log.d("VideoPlayer", "Sending translate request with:")
-                Log.d("VideoPlayer", "  - video_url: $videoUrl")
+                Log.d("VideoPlayer", "  - video_url(playback): $videoUrl")
+                Log.d("VideoPlayer", "  - video_url(remote): $remoteVideoUrl")
+                Log.d("VideoPlayer", "  - video_url(sent): $translationUrl")
                 Log.d("VideoPlayer", "  - room_id: $roomId")
                 Log.d("VideoPlayer", "  - frame_rate: $frameRate")
                 Log.d("VideoPlayer", "  - resolution: $resolution")
                 Log.d("VideoPlayer", "  - message_id: $messageId")
 
                 val json = org.json.JSONObject().apply {
-                    put("video_url", videoUrl)
+                    put("video_url", translationUrl)
                     put("room_id", roomId)
                     put("frame_rate", frameRate)
                     put("resolution", resolution)
@@ -659,6 +690,9 @@ class VideoPlayerActivity : AppCompatActivity() {
                     }
                     response.close()
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Activity went away / job cancelled — not a real network failure.
+                Log.i("VideoPlayer", "Translate request cancelled")
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     binding.progressBar.visibility = View.GONE
