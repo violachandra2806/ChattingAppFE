@@ -137,9 +137,9 @@ class SettingsFragment : Fragment() {
         if (!isAdded) return
         AlertDialog.Builder(requireContext())
             .setTitle("Konfirmasi")
-            .setMessage("Are you sure to log out?")
-            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
-            .setPositiveButton("Log out") { _, _ -> doLogout() }
+            .setMessage("Apakah Anda yakin ingin keluar dari akun ini?")
+            .setNegativeButton("Batal") { dialog, _ -> dialog.dismiss() }
+            .setPositiveButton("Keluar") { _, _ -> doLogout() }
             .show()
     }
 

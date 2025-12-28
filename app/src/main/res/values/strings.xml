@@ -2,11 +2,11 @@
 
     <!-- App -->
     <string name="app_name">KALVI</string>
-    <string name="app_title_welcome">Selamat Datang</string>
+    <string name="app_title_welcome">Selamat Datang!</string>
     <string name="title_chat">Obrolan</string>
     <string name="title_friend">Teman</string>
     <string name="title_setting">Pengaturan</string>
-    <string name="app_description">Aplikasi chat untuk pengguna tuli, bisu, dan pendengar dengan teks, terjemahan video, dan transkripsi suara.</string>
+    <string name="app_description">Melalui KALVI, aplikasi chat ini membantu komunikasi antara Teman Tuli dan pengguna umum melalui teks, suara, dan gerakan tangan.</string>
 
     <!-- Common actions/labels -->
     <string name="action_search">Cari</string>

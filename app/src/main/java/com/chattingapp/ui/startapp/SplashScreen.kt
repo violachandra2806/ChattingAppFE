@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -15,20 +16,20 @@ class SplashScreen : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash_screen)
 
-        val appNameTextView = findViewById<TextView>(R.id.appNameTextView)
+        val appNameImageView = findViewById<ImageView>(R.id.appNameImageView)
         val rootLayout = findViewById<RelativeLayout>(R.id.splashRootLayout)
 
         val circleIn = AnimationUtils.loadAnimation(this, R.anim.rotate_scale_in)
         val shine = AnimationUtils.loadAnimation(this, R.anim.shine_effect)
         val swipeUp = AnimationUtils.loadAnimation(this, R.anim.swipe_up_whole)
 
-        appNameTextView.startAnimation(circleIn)
+        appNameImageView.startAnimation(circleIn)
 
         circleIn.setAnimationListener(object : Animation.AnimationListener {
             override fun onAnimationStart(animation: Animation?) {}
 
             override fun onAnimationEnd(animation: Animation?) {
-                appNameTextView.startAnimation(shine)
+                appNameImageView.startAnimation(shine)
             }
 
             override fun onAnimationRepeat(animation: Animation?) {}
