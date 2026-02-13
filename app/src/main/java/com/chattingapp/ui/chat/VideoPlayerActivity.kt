@@ -27,6 +27,7 @@ import okhttp3.Request
 import org.json.JSONArray
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
+import com.chattingapp.utils.CryptoUtils
 
 class VideoPlayerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityVideoPlayerBinding
@@ -498,7 +499,7 @@ class VideoPlayerActivity : AppCompatActivity() {
                                 for (i in 0 until timestampsArray.length()) {
                                     val item = timestampsArray.getJSONObject(i)
                                     val second = item.optDouble("second", 0.0)
-                                    val text = item.optString("text", "")
+                                    val text = CryptoUtils.decryptIfNeeded(item.optString("text", "")) ?: ""
 
                                     // Validate and fix timing if needed
                                     val correctedSecond = if (second < 0) 0.0 else second

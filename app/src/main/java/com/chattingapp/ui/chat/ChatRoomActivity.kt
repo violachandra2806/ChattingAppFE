@@ -56,6 +56,7 @@ import java.io.IOException
 import java.security.MessageDigest
 import kotlinx.coroutines.Job
 import com.chattingapp.utils.AvatarUtils
+import com.chattingapp.utils.CryptoUtils
 
 class ChatRoomActivity : AppCompatActivity() {
 
@@ -509,17 +510,22 @@ class ChatRoomActivity : AppCompatActivity() {
                                 }
 
                                 val sentAtRaw = o.optString("sent_at")
+                                val decryptedContent = CryptoUtils.decryptIfNeeded(
+                                    o.optString("content", null)
+                                        ?.takeIf { it.isNotBlank() && !it.equals("null", true) }
+                                )
+                                val decryptedTranscript = CryptoUtils.decryptIfNeeded(transcript)
                                 val message = Message(
                                     messageId = o.optString("message_id"),
                                     roomId = o.optString("room_id"),
                                     senderId = o.optString("sender_id"),
                                     messageType = o.optString("message_type", "text"),
-                                    content = o.optString("content", null)
+                                    content = decryptedContent
                                         ?.takeIf { it.isNotBlank() && !it.equals("null", true) },
                                     mediaUrl = o.optString("media_url", null)
                                         ?.takeIf { it.isNotBlank() && !it.equals("null", true) },
                                     durationSec = if (o.has("duration_sec")) o.optInt("duration_sec") else null,
-                                    transcriptText = transcript,
+                                    transcriptText = decryptedTranscript,
                                     sentAt = formatTimeOnly(sentAtRaw),
                                     sentAtRaw = sentAtRaw,
                                     // Add these lines for video metadata - FIXED VERSION
@@ -934,17 +940,22 @@ class ChatRoomActivity : AppCompatActivity() {
                             }
 
                             val sentAtRaw = msgObj.optString("sent_at")
+                            val decryptedContent = CryptoUtils.decryptIfNeeded(
+                                msgObj.optString("content", null)
+                                    ?.takeIf { it.isNotBlank() && !it.equals("null", true) }
+                            )
+                            val decryptedTranscript = CryptoUtils.decryptIfNeeded(transcript)
                             val newMsg = Message(
                                 messageId = msgObj.optString("message_id"),
                                 roomId = msgObj.optString("room_id"),
                                 senderId = msgObj.optString("sender_id"),
                                 messageType = msgObj.optString("message_type", "text"),
-                                content = msgObj.optString("content", null)
+                                content = decryptedContent
                                     ?.takeIf { it.isNotBlank() && !it.equals("null", true) },
                                 mediaUrl = msgObj.optString("media_url", null)
                                     ?.takeIf { it.isNotBlank() && !it.equals("null", true) },
                                 durationSec = if (msgObj.has("duration_sec")) msgObj.optInt("duration_sec") else null,
-                                transcriptText = transcript,
+                                transcriptText = decryptedTranscript,
                                 sentAt = formatTimeOnly(sentAtRaw),
                                 sentAtRaw = sentAtRaw
                             )

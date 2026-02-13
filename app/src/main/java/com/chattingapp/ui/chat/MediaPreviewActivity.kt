@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
+import com.chattingapp.utils.CryptoUtils
 import org.json.JSONObject
 import java.io.File
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -457,14 +458,16 @@ class MediaPreviewActivity : AppCompatActivity() {
                                     for (i in 0 until dataArray.length()) {
                                         val item = dataArray.getJSONObject(i)
                                         val second = item.optDouble("second", 0.0)
-                                        val text = item.optString("text", "")
+                                        val text = CryptoUtils.decryptIfNeeded(item.optString("text", "")) ?: ""
                                         subtitleItems.add(SubtitleItem(second, text))
                                     }
                                     Log.d("TRANSLATE_ASL", "Got ${subtitleItems.size} subtitle items")
                                 }
 
                                 // Get translated script for display
-                                val translatedScript = jsonResponse.optString("translated_script", "")
+                                val translatedScript = CryptoUtils.decryptIfNeeded(
+                                    jsonResponse.optString("translated_script", "")
+                                ) ?: ""
                                 if (translatedScript.isNotEmpty()) {
                                     Log.d("TRANSLATE_ASL", "Translated script: $translatedScript")
                                 }

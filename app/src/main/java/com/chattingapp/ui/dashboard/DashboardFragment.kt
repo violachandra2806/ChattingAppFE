@@ -19,6 +19,7 @@ import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
 import com.chattingapp.BuildConfig
 import com.chattingapp.R
+import com.chattingapp.utils.CryptoUtils
 import com.chattingapp.databinding.FragmentDashboardBinding
 import com.chattingapp.ui.chat.ChatRoomActivity
 import com.chattingapp.utils.SharedPreferencesManager
@@ -199,7 +200,7 @@ class DashboardFragment : Fragment() {
                                         id = item.getString("room_id"),
                                         username = friendObject.getString("username"),
                                         profilePicture = friendObject.optString("profile_picture", ""),
-                                        lastMessage = item.optString("last_message", ""),
+                                        lastMessage = CryptoUtils.decryptIfNeeded(item.optString("last_message", "")) ?: "",
                                         time = formatTime(item.optString("last_message_at", "")),
                                         unreadCount = 0,
                                         userIdFirst = currentUserId,
@@ -364,7 +365,7 @@ class DashboardFragment : Fragment() {
                                     id = item.getString("room_id"),
                                     username = friendObject.getString("username"),
                                     profilePicture = friendObject.optString("profile_picture", ""),
-                                    lastMessage = item.optString("last_message", ""),
+                                    lastMessage = CryptoUtils.decryptIfNeeded(item.optString("last_message", "")) ?: "",
                                     time = formatTime(item.optString("last_message_at", "")),
                                     unreadCount = 0,
                                     userIdFirst = currentUserId,
